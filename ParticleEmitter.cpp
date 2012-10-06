@@ -33,6 +33,17 @@ ParticleEmitter::ParticleEmitter(void) {
 	index = 0;
 	created = 0;
 
+	gravityOn = false;
+	float* v = new float[3];
+	gravity = new Particle(v);
+
+	float* p = new float[3];
+	p[0] = 5;
+	p[1] = -3;
+
+	setGravity(p);
+	gravityOn=true;
+
 }
 
 ParticleEmitter::~ParticleEmitter(void) {
@@ -48,15 +59,16 @@ ParticleEmitter::~ParticleEmitter(void) {
 
 }
 
+bool ParticleEmitter::isGravityOn(){
+	return gravityOn;
+}
+
 void ParticleEmitter::emit(){
 
-	/*
-	 * No Initial velocity
-	 */
 	float HI = 0.02f;
 	float LO = -0.02f;
 
-	float* v = (float*) malloc(sizeof(float) * 3);
+	float* v = new float[3];
 	v[0] = LO + (float)rand()/((float)RAND_MAX/(HI-LO));
 	v[1] = LO + (float)rand()/((float)RAND_MAX/(HI-LO));
 	v[2] = LO + (float)rand()/((float)RAND_MAX/(HI-LO));
@@ -91,19 +103,12 @@ void ParticleEmitter::emit(){
 			}
 	}
 
-found:; // Never again...
-
-//free(v);
-
+	found:; // Never again...
 
 }
 
 void ParticleEmitter::tick(){
 
-	/*
-	float* force = (float*) malloc (sizeof (float) * 3 );
-	force[0] = 0.02f; force[1] = 0.01f; force[2] = 0.06f;
-	 */
 	// Loop through all active particles drawing them
 	for(int i = 0; i < MAX_PARTICLES && i < created ; i ++)
 
@@ -111,10 +116,21 @@ void ParticleEmitter::tick(){
 		if(!particles[i]->isDead()){
 			//particles[i]->applyForce(force);
 			particles[i]->tick(); // Simulate
+			particles[i]->applyFriction(0.01f);
+
+			if(gravityOn)
+				particles[i]->applyAttractiveForce(particles[i],gravity,-0.002f,100);
 
 		}
 
-	//free(force);
+}
+
+void ParticleEmitter::applyWind(float* wind){
+	for(int i = 0; i < MAX_PARTICLES && i < created ; i ++){
+		if(!particles[i]->isDead()){
+			particles[i]->applyForce(wind);
+		}
+	}
 }
 
 
@@ -167,13 +183,23 @@ void ParticleEmitter::setVector(float* v){
 
 }
 
+void ParticleEmitter::setGravity(float* pos){
+	gravity->setPosition(pos);
+}
+void ParticleEmitter::turnGravityOn(){
+	gravityOn = true;
+}
+void ParticleEmitter::turnGravityOff(){
+	gravityOn = false;
+}
+
 
 
 void ParticleEmitter::renderParticles() {
 
 	glPushMatrix();
 
-	// Rotate to face vector
+	// Rotate to face vector, might take this out
 	glRotatef(
 			orientation[0],
 			orientation[1],
@@ -181,6 +207,10 @@ void ParticleEmitter::renderParticles() {
 			orientation[3]
 	);
 
+	glutWireCone(1,1,3,3);
+
+	glPopMatrix();
+	glPushMatrix();
 	// Loop through all active particles drawing them
 	for(int i = 0; i < MAX_PARTICLES && i < created ; i ++)
 
@@ -188,9 +218,11 @@ void ParticleEmitter::renderParticles() {
 		if(!particles[i]->isDead())
 			particles[i]->renderParticle(); // Render
 
-
-	glutWireCone(1,3,3,3);
-
 	glPopMatrix();
+
+
+	gravity->renderParticle();
+
+
 
 }

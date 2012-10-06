@@ -36,6 +36,9 @@ private:
 	int created;
 	int index;
 
+	Particle* gravity;
+	bool gravityOn;
+
 public:
 
 	float* getPosition(); // Get the world coordinates
@@ -51,6 +54,13 @@ public:
 	void tick(); // Run a single frame of simulation
 
 	void emit(); // Emit a particle
+
+	void applyWind(float*); // Apply a force to all the particles
+
+	void setGravity(float*); // Sets the center of gravity, one beef cake particle
+	void turnGravityOn();
+	void turnGravityOff();
+	bool isGravityOn();
 
 	ParticleEmitter(void); // Defaults
 	ParticleEmitter(char*); // Load from *.pec file

@@ -118,8 +118,16 @@ void loadTexture (char* filename, GLuint id){
  * Do stuff, in the background
  */
 void tick (){
+
+	/*
+	 * Simulate a frame in the particle emitter
+	 */
 	particeEmitter->tick();
-	particeEmitter->emit();
+
+	/*
+	 * Rotate the world for effect
+	 */
+	glRotatef(0.2f, 0.5f, 1, 0.2f);
 	G308_display();
 }
 
@@ -157,10 +165,8 @@ void G308_display() {
 	 * Draw stuff here!
 	 */
 
-	//glutWireSphere(3,100,100);
-
 	/*
-	 * Particle Emitter
+	 * Draw the particle emmiter and it's particles
 	 */
 	particeEmitter->renderParticles();
 
@@ -197,7 +203,52 @@ void mouse (int button, int state, int x, int y){
  */
 void G308_keyboardListener(unsigned char key, int x, int y) {
 
+	/*
+	 * Particle Wind Controls
+	 */
+
+	float* wind = new float [3];
+	wind[0] = 0; wind[1] = 0; wind[2] = 0;
+
+	if(key == 'i')
+	{
+		wind[1] = 0.1f;
+		particeEmitter->applyWind(wind);
+
+	}
+
+	if(key == 'k')
+	{
+		wind[1] = -0.1f;
+		particeEmitter->applyWind(wind);
+
+	}
+
+	if(key == 'j')
+	{
+		wind[0] = -0.1f;
+		particeEmitter->applyWind(wind);
+
+	}
+
+	if(key == 'l')
+	{
+		wind[0] = 0.1f;
+		particeEmitter->applyWind(wind);
+
+	}
+
+	if(key == 'g')
+		if(particeEmitter->isGravityOn())
+			particeEmitter->turnGravityOff();
+		else
+			particeEmitter->turnGravityOn();
+
+	if(key == 'e')
+		for(int i = 0 ; i < 50 ; i ++)
+			particeEmitter->emit();
 }
+
 
 /*
  * Reshape function
@@ -224,7 +275,7 @@ void G308_SetCamera() {
 	glLoadIdentity();
 
 	gluLookAt(
-			0, 0, 200,
+			0, 0, 40,
 			0, 0, 0,
 			0, 1, 0
 	);
