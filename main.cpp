@@ -27,6 +27,7 @@
 #include "G308_Geometry.h"
 #include "quaternion.h"
 #include "G308_ImageLoader.h"
+#include "ParticleEmitter.h"
 
 GLuint g_mainWnd;
 GLuint g_nWinWidth = G308_WIN_WIDTH;
@@ -45,6 +46,10 @@ void menu (int);
 
 void tick();
 
+/*
+ * Particle Emitter
+ */
+ParticleEmitter* particeEmitter;
 
 G308_Geometry** geometry = NULL;
 int numGeo;
@@ -71,8 +76,15 @@ int main(int argc, char** argv) {
 	glutDisplayFunc(G308_display);
 	glutReshapeFunc(G308_Reshape);
 
-	G308_init();
 
+	particeEmitter = new ParticleEmitter();
+	float* v = new float[3];
+	v[0] = 0;
+	v[1] = 1;
+	v[2] = 0;
+	particeEmitter->setVector(v);
+
+	G308_init();
 	glutIdleFunc(tick);
 	glutMouseFunc(mouse);
 	glutMotionFunc(mouseMotion);
@@ -106,8 +118,9 @@ void loadTexture (char* filename, GLuint id){
  * Do stuff, in the background
  */
 void tick (){
-
-
+	particeEmitter->tick();
+	particeEmitter->emit();
+	G308_display();
 }
 
 
@@ -140,11 +153,16 @@ void G308_display() {
 
 	glPushMatrix();
 
-	glutWireSphere(3,100,100);
+	/*
+	 * Draw stuff here!
+	 */
 
-	for(int i = 0 ; i < numGeo ; i ++)
-		geometry[i]->RenderGeometry();
+	//glutWireSphere(3,100,100);
 
+	/*
+	 * Particle Emitter
+	 */
+	particeEmitter->renderParticles();
 
 
 
@@ -206,7 +224,7 @@ void G308_SetCamera() {
 	glLoadIdentity();
 
 	gluLookAt(
-			0, 0, 20,
+			0, 0, 200,
 			0, 0, 0,
 			0, 1, 0
 	);
