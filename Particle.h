@@ -28,6 +28,8 @@ private:
 	float* velocity; // x, y, z
 	float* acceletation; // x, y, z
 	float mass;
+
+	int lifeSpan;
 	int lifeSpanLeft;
 
 	float* color;

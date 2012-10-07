@@ -40,18 +40,12 @@ Particle::Particle(float* initialVelocity) {
 
 	color = new float [3];
 
-	float HI = 1;
-	float LO = 0;
-	color[0] = LO + (float)rand()/((float)RAND_MAX/(HI-LO));
-	color[1] = LO + (float)rand()/((float)RAND_MAX/(HI-LO));
-	color[2] = LO + (float)rand()/((float)RAND_MAX/(HI-LO));
-
 	/*
 	 * Lifespan
 	 */
-	HI = 2000;
-	LO = 500;
-	lifeSpanLeft = LO + (float)rand()/((float)RAND_MAX/(HI-LO));
+	float HI = 20000;
+	float LO = 18000;
+	lifeSpanLeft = lifeSpan = LO + (float)rand()/((float)RAND_MAX/(HI-LO));
 
 }
 
@@ -98,10 +92,11 @@ void Particle::renderParticle() {
 
 	glPushMatrix();
 
+	// Fade color from red to blue over time
 	glColor3f(
-			color[0],
-			color[1],
-			color[2]
+			(float)lifeSpanLeft / (float)lifeSpan,
+			0,
+			1 - ((float)lifeSpanLeft / (float)lifeSpan)
 	);
 
 	// Translate to where the particle is
@@ -116,6 +111,7 @@ void Particle::renderParticle() {
 	 * This is the cheapest implementation, and will serve for now,
 	 * We just remove the rotation information from the modelview matrix
 	 */
+
 	float modelview[16];
 	glGetFloatv(GL_MODELVIEW_MATRIX , modelview);
 
@@ -131,13 +127,26 @@ void Particle::renderParticle() {
 	// Set the modelview with no rotations and scaling
 	glLoadMatrixf(modelview);
 
+
+
+	float size = 0.1f;
+
 	// Draw Quad
 	glBegin(GL_QUADS);
-		glVertex3f(-0.1f, 0.1f, 0.0f);
-		glVertex3f( 0.1f, 0.1f, 0.0f);
-		glVertex3f( 0.1f,-0.1f, 0.0f);
-		glVertex3f(-0.1f,-0.1f, 0.0f);
+		glTexCoord2f(0, 1);
+		glVertex3f(-1 * size, 1 * size, 0.0f);
+
+		glTexCoord2f(1, 1);
+		glVertex3f( 1 * size, 1 * size, 0.0f);
+
+		glTexCoord2f(1, 0);
+		glVertex3f( 1 * size,-1 * size, 0.0f);
+
+		glTexCoord2f(0,0);
+		glVertex3f(-1 * size,-1 * size, 0.0f);
 	glEnd();
+
+
 
 	glPopMatrix();
 

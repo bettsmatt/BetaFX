@@ -47,6 +47,7 @@ void menu (int);
 void tick();
 
 float camAngle;
+float camHeight;
 
 /*
  * Particle Emitter
@@ -86,7 +87,10 @@ int main(int argc, char** argv) {
 	v[2] = 0;
 	particeEmitter->setVector(v);
 
+	loadTexture("sprite2.png", 1);
+
 	camAngle = 0;
+	camHeight = 0;
 
 	G308_init();
 	glutIdleFunc(tick);
@@ -104,7 +108,7 @@ void loadTexture (char* filename, GLuint id){
 
 	texInfo* t = (texInfo*) malloc(sizeof(texInfo));
 
-	loadTextureFromJPEG(filename, t);
+	loadTextureFromPNG(filename, t);
 
 	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 	glGenTextures(1, &id);
@@ -114,7 +118,7 @@ void loadTexture (char* filename, GLuint id){
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, t->width, t->height, 0, GL_RGB,
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, t->width, t->height, 0, GL_RGBA,
 			GL_UNSIGNED_BYTE, t->textureData);
 }
 
@@ -132,26 +136,23 @@ void tick (){
 	 * Rotate the camera for effect
 	 */
 
-	glMatrixMode(GL_PROJECTION);
-		glLoadIdentity();
-		gluPerspective(G308_FOVY, (double) g_nWinWidth / (double) g_nWinHeight, G308_ZNEAR_3D, G308_ZFAR_3D);
-		glMatrixMode(GL_MODELVIEW);
-		glLoadIdentity();
 
-	float x = sin(camAngle) * 30.0f;
-	float z = cos(camAngle) * 30.0f;
+	glMatrixMode(GL_PROJECTION);
+	glLoadIdentity();
+	gluPerspective(G308_FOVY, (double) g_nWinWidth / (double) g_nWinHeight, G308_ZNEAR_3D, G308_ZFAR_3D);
+	glMatrixMode(GL_MODELVIEW);
+	glLoadIdentity();
+
+	float x = sin(camAngle) * 50.0f;
+	float z = cos(camAngle) * 50.0f;
 
 	gluLookAt(
-			x,-0,z,
+			x,camHeight,z,
 			0,0,0,
 			0,1,0
 	);
 
-	printf("x:%f, y:%f\n",x,z );
-
-
-	camAngle+= 0.005f;
-
+	//camAngle+= 0.005f;
 	G308_display();
 }
 
@@ -169,8 +170,6 @@ void G308_display() {
 
 	glEnable(GL_LIGHTING);
 	glEnable(GL_LIGHT0);
-	glEnable(GL_LIGHT1);
-	glEnable(GL_LIGHT2);
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_COLOR_MATERIAL);
 
@@ -192,9 +191,6 @@ void G308_display() {
 	/*
 	 * Draw the particle emmiter and it's particles
 	 */
-
-
-
 	particeEmitter->renderParticles();
 
 	glPopMatrix();
@@ -202,8 +198,6 @@ void G308_display() {
 
 	glDisable(GL_DEPTH_TEST);
 	glDisable(GL_LIGHTING);
-	glDisable(GL_LIGHT2);
-	glDisable(GL_LIGHT1);
 	glDisable(GL_LIGHT0);
 	glDisable(GL_COLOR_MATERIAL);
 
@@ -264,15 +258,29 @@ void G308_keyboardListener(unsigned char key, int x, int y) {
 
 	}
 
-	if(key == 'g')
+	if(key == 'g'){
 		if(particeEmitter->isGravityOn())
 			particeEmitter->turnGravityOff();
 		else
 			particeEmitter->turnGravityOn();
+	}
 
 	if(key == 'e')
 		for(int i = 0 ; i < 50 ; i ++)
 			particeEmitter->emit();
+
+
+	if(key == '4')
+		camAngle += 0.05f;
+
+	if(key == '6')
+		camAngle -= 0.05f;
+
+	if(key == '8')
+		camHeight += 1;
+
+	if(key == '2')
+		camHeight -= 1;
 }
 
 
@@ -280,6 +288,7 @@ void G308_keyboardListener(unsigned char key, int x, int y) {
  * Reshape function
  */
 void G308_Reshape(int w, int h) {
+
 	if (h == 0)
 		h = 1;
 
@@ -310,6 +319,23 @@ void G308_SetCamera() {
 
 // Set View Position
 void G308_SetLight() {
+
+	/*
+	 * Ambient
+	 */
+	GLfloat ambientG[] = { 1, 1, 1, 1 };
+	glLightModelfv(GL_LIGHT_MODEL_AMBIENT,ambientG);
+
+	/*
+	 * Point Light
+	 */
+	GLfloat positionPoint[] = { 0, 0, 0, 1 };
+	float diffusePoint[] = { 1, 1, 1, 1 };
+	float specularPoint[] = { 1, 1, 1, 1 };
+
+	glLightfv(GL_LIGHT0, GL_POSITION, positionPoint);
+	glLightfv(GL_LIGHT0, GL_DIFFUSE, diffusePoint);
+	glLightfv(GL_LIGHT0, GL_SPECULAR, specularPoint);
 
 
 }

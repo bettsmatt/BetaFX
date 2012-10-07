@@ -39,7 +39,7 @@ ParticleEmitter::ParticleEmitter(void) {
 
 	float* p = new float[3];
 	p[0] = 5;
-	p[1] = -3;
+	p[1] = 0;
 
 	setGravity(p);
 	gravityOn=true;
@@ -65,13 +65,20 @@ bool ParticleEmitter::isGravityOn(){
 
 void ParticleEmitter::emit(){
 
-	float HI = 0.1f;
-	float LO = -0.1f;
+
+	float XHI = 0.1f;
+	float XLO = -0.1f;
+
+	float YHI = 0.1f;
+	float YLO = -0.1f;
+
+	float ZHI = 0.3f;
+	float ZLO = 0.2f;
 
 	float* v = new float[3];
-	v[0] = LO + (float)rand()/((float)RAND_MAX/(HI-LO));
-	v[1] = LO + (float)rand()/((float)RAND_MAX/(HI-LO));
-	v[2] = LO + (float)rand()/((float)RAND_MAX/(HI-LO));
+	v[0] = XLO + (float)rand()/((float)RAND_MAX/(XHI-XLO));
+	v[1] = YLO + (float)rand()/((float)RAND_MAX/(YHI-YLO));
+	v[2] = ZLO + (float)rand()/((float)RAND_MAX/(ZHI-ZLO));
 	int start = index;
 
 
@@ -116,10 +123,10 @@ void ParticleEmitter::tick(){
 		if(!particles[i]->isDead()){
 			//particles[i]->applyForce(force);
 			particles[i]->tick(); // Simulate
-			particles[i]->applyFriction(0.01f);
+			particles[i]->applyFriction(0.0001f);
 
 			if(gravityOn)
-				particles[i]->applyAttractiveForce(particles[i],gravity,-0.0002f,100);
+				particles[i]->applyAttractiveForce(particles[i],gravity,-0.002f,100);
 
 		}
 
@@ -212,6 +219,22 @@ void ParticleEmitter::renderParticles() {
 	glPopMatrix();
 	glPushMatrix();
 
+
+	/*
+	 * All particles have the same texture, so we do this here.
+	 */
+	glEnable(GL_TEXTURE_2D);
+	glDepthMask(0);
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glEnable(GL_POINT_SPRITE_ARB);
+
+	glBindTexture(GL_TEXTURE_2D, 1);
+	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+
 	// Loop through all active particles drawing them
 	for(int i = 0; i < MAX_PARTICLES && i < created ; i ++)
 
@@ -219,11 +242,16 @@ void ParticleEmitter::renderParticles() {
 		if(!particles[i]->isDead())
 			particles[i]->renderParticle(); // Render
 
+	glDisable(GL_BLEND);
+	glDisable(GL_POINT_SPRITE_ARB);
+	glDisable(GL_TEXTURE_2D);
+
+	gravity->renderParticle();
+
 
 	glPopMatrix();
 
 
-	gravity->renderParticle();
 
 
 
