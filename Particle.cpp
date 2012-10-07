@@ -104,13 +104,40 @@ void Particle::renderParticle() {
 			color[2]
 	);
 
+	// Translate to where the particle is
 	glTranslatef(
 			position[0],
 			position[1],
 			position[2]
 	);
 
-	glutSolidSphere(0.1,3,3);
+	/*
+	 * Since we always want the particles to face the camera we need to billboard
+	 * This is the cheapest implementation, and will serve for now,
+	 * We just remove the rotation information from the modelview matrix
+	 */
+	float modelview[16];
+	glGetFloatv(GL_MODELVIEW_MATRIX , modelview);
+
+	// Undo all rotations, scaling lost too
+	for( int i=0; i<3; i++ )
+		for( int j=0; j<3; j++ ) {
+			if ( i==j )
+				modelview[i*4+j] = 1.0;
+			else
+				modelview[i*4+j] = 0.0;
+		}
+
+	// Set the modelview with no rotations and scaling
+	glLoadMatrixf(modelview);
+
+	// Draw Quad
+	glBegin(GL_QUADS);
+		glVertex3f(-0.1f, 0.1f, 0.0f);
+		glVertex3f( 0.1f, 0.1f, 0.0f);
+		glVertex3f( 0.1f,-0.1f, 0.0f);
+		glVertex3f(-0.1f,-0.1f, 0.0f);
+	glEnd();
 
 	glPopMatrix();
 
@@ -141,7 +168,7 @@ void Particle::applyAttractiveForce(Particle* p1, Particle* p2, float strength, 
 			vec[0] * vec[0] +
 			vec[1] * vec[1] +
 			vec[2] * vec[2]
-	 );
+	);
 
 	// Close enough
 	if(dist < minDist){

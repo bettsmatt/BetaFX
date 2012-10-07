@@ -46,6 +46,8 @@ void menu (int);
 
 void tick();
 
+float camAngle;
+
 /*
  * Particle Emitter
  */
@@ -83,6 +85,8 @@ int main(int argc, char** argv) {
 	v[1] = 1;
 	v[2] = 0;
 	particeEmitter->setVector(v);
+
+	camAngle = 0;
 
 	G308_init();
 	glutIdleFunc(tick);
@@ -125,9 +129,29 @@ void tick (){
 	particeEmitter->tick();
 
 	/*
-	 * Rotate the world for effect
+	 * Rotate the camera for effect
 	 */
-	glRotatef(0.2f, 0.5f, 1, 0.2f);
+
+	glMatrixMode(GL_PROJECTION);
+		glLoadIdentity();
+		gluPerspective(G308_FOVY, (double) g_nWinWidth / (double) g_nWinHeight, G308_ZNEAR_3D, G308_ZFAR_3D);
+		glMatrixMode(GL_MODELVIEW);
+		glLoadIdentity();
+
+	float x = sin(camAngle) * 30.0f;
+	float z = cos(camAngle) * 30.0f;
+
+	gluLookAt(
+			x,-0,z,
+			0,0,0,
+			0,1,0
+	);
+
+	printf("x:%f, y:%f\n",x,z );
+
+
+	camAngle+= 0.005f;
+
 	G308_display();
 }
 
@@ -168,11 +192,13 @@ void G308_display() {
 	/*
 	 * Draw the particle emmiter and it's particles
 	 */
+
+
+
 	particeEmitter->renderParticles();
 
-
-
 	glPopMatrix();
+
 
 	glDisable(GL_DEPTH_TEST);
 	glDisable(GL_LIGHTING);
@@ -275,7 +301,7 @@ void G308_SetCamera() {
 	glLoadIdentity();
 
 	gluLookAt(
-			0, 0, 40,
+			30, 30, 30,
 			0, 0, 0,
 			0, 1, 0
 	);

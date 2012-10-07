@@ -65,8 +65,8 @@ bool ParticleEmitter::isGravityOn(){
 
 void ParticleEmitter::emit(){
 
-	float HI = 0.02f;
-	float LO = -0.02f;
+	float HI = 0.1f;
+	float LO = -0.1f;
 
 	float* v = new float[3];
 	v[0] = LO + (float)rand()/((float)RAND_MAX/(HI-LO));
@@ -119,7 +119,7 @@ void ParticleEmitter::tick(){
 			particles[i]->applyFriction(0.01f);
 
 			if(gravityOn)
-				particles[i]->applyAttractiveForce(particles[i],gravity,-0.002f,100);
+				particles[i]->applyAttractiveForce(particles[i],gravity,-0.0002f,100);
 
 		}
 
@@ -211,12 +211,14 @@ void ParticleEmitter::renderParticles() {
 
 	glPopMatrix();
 	glPushMatrix();
+
 	// Loop through all active particles drawing them
 	for(int i = 0; i < MAX_PARTICLES && i < created ; i ++)
 
 		// Alive!
 		if(!particles[i]->isDead())
 			particles[i]->renderParticle(); // Render
+
 
 	glPopMatrix();
 
