@@ -28,6 +28,8 @@
 #include "quaternion.h"
 #include "G308_ImageLoader.h"
 #include "ParticleEmitter.h"
+#include "Collision.h"
+#include "Ball.h"
 
 GLuint g_mainWnd;
 GLuint g_nWinWidth = G308_WIN_WIDTH;
@@ -45,14 +47,16 @@ void mouseMotion (int x, int y);
 void menu (int);
 
 void tick();
+void createBalls();
 
 /*
  * Particle Emitter
  */
 ParticleEmitter* particeEmitter;
-
+Collision* collision;
 G308_Geometry** geometry = NULL;
-int numGeo;
+Ball** balls = NULL;
+int numGeo, hitCount = 0;
 
 void loadTexture(char*, GLuint);
 
@@ -83,6 +87,10 @@ int main(int argc, char** argv) {
 	v[1] = 1;
 	v[2] = 0;
 	particeEmitter->setVector(v);
+
+	collision = new Collision();
+
+	createBalls();
 
 	G308_init();
 	glutIdleFunc(tick);
@@ -120,6 +128,19 @@ void loadTexture (char* filename, GLuint id){
 void tick (){
 	particeEmitter->tick();
 	particeEmitter->emit();
+	for(int i = 0; i < 10; i ++){
+		balls[i]->tick();
+	}
+	for(int i = 0; i < 10; i++){
+		for(int j = 0; j < 10; j++){
+			if(collision->checkIfCollided(balls[i], balls[j]) && i != j){
+				hitCount++;
+				printf("hit: %d\n", hitCount);
+			}
+		}
+	}
+
+
 	G308_display();
 }
 
@@ -164,9 +185,14 @@ void G308_display() {
 	 */
 	particeEmitter->renderParticles();
 
+	for(int i = 0; i < 10; i ++){
+		balls[i]->renderBall();
+	}
 
 
 	glPopMatrix();
+
+
 
 	glDisable(GL_DEPTH_TEST);
 	glDisable(GL_LIGHTING);
@@ -234,6 +260,22 @@ void G308_SetCamera() {
 // Set View Position
 void G308_SetLight() {
 
+
+}
+
+void createBalls(){
+	balls = (Ball**) malloc (sizeof(Ball*) * 10);
+	for(int i = 0; i < 10; i++){
+		float HI = 0.02f;
+		float LO = -0.02f;
+
+		float* v = (float*) malloc(sizeof(float) * 3);
+		v[0] = LO + (float)rand()/((float)RAND_MAX/(HI-LO));
+		v[1] = LO + (float)rand()/((float)RAND_MAX/(HI-LO));
+		v[2] = LO + (float)rand()/((float)RAND_MAX/(HI-LO));
+
+		balls[i] = new Ball(v);
+	}
 
 }
 

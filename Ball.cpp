@@ -15,12 +15,12 @@
 //
 //----------------------------------------------------------------------------
 
-#include "Particle.h"
+#include "Ball.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
 
-Particle::Particle(float* initialVelocity) {
+Ball::Ball(float* initialVelocity) {
 
 	// Zero
 	position = new float[3];
@@ -32,33 +32,24 @@ Particle::Particle(float* initialVelocity) {
 		velocity[i] = initialVelocity[i];
 
 	mass = 1; // Default
-	lifeSpanLeft = 1000; // Default
 
 }
 
-Particle::~Particle(void) {
+Ball::~Ball(void) {
 	free(position);
 	free(velocity);
 	free(acceletation);
 }
 
 
-bool Particle::isDead(){
-
-	// Particle's timer has run down
-	return lifeSpanLeft <= 0;
-}
-
-
-void Particle::applyForce(float* force){
-
+void Ball::applyForce(float* force){
 	for(int i = 0 ; i < 3 ; i ++){
 		acceletation[i] += force[i] / mass;
 	}
 
 }
 
-void Particle::tick (){
+void Ball::tick (){
 	/*
 	 * Apply acceleration to velocity,
 	 * Update the position by the new velocity.
@@ -69,12 +60,9 @@ void Particle::tick (){
 		position[i] += velocity[i];
 		acceletation[i] = 0;
 	}
-
-	lifeSpanLeft--;
-
 }
 
-void Particle::renderParticle() {
+void Ball::renderBall() {
 
 	glPushMatrix();
 
@@ -84,7 +72,7 @@ void Particle::renderParticle() {
 			position[2]
 	);
 
-	glutSolidSphere(0.2,3,3);
+	glutSolidSphere(2,20,20);
 
 	glPopMatrix();
 
