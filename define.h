@@ -35,6 +35,10 @@
 // Define number of vertex 
 #define G308_NUM_VERTEX_PER_FACE 3 // Triangle = 3, Quad = 4 
 
+#define MOVE_ALONG_X 11
+#define MOVE_ALONG_Y 22
+#define MOVE_ALONG_Z 33
+
 // Define Basic Structures
 struct G308_Point {
 	float x;
