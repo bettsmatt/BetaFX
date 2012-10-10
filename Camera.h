@@ -10,11 +10,13 @@
 
 class Camera {
 public:
+	float zoom, rotx, roty, tx, ty;
+
 	Camera();
 	virtual ~Camera();
 
 	void SetInitialCameraPosition(double winWidth, double winHeight);
-	void RotateCamera(float zoom, float tx, float ty, float rotx, float roty);
+	void RotateCamera();
 	void ResetCamera(float* zoom, float* tx, float* ty, float* rotx, float* roty);
 };
 

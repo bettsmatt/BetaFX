@@ -1,20 +1,3 @@
-//---------------------------------------------------------------------------
-//
-// This software is provided 'as-is' for assignment of COMP308
-// in ECS, Victoria University of Wellington,
-// without any express or implied warranty.
-// In no event will the authors be held liable for any
-// damages arising from the use of this software.
-//
-// The contents of this file may not be copied or duplicated in any form
-// without the prior permission of its owner.
-//
-// Copyright (c) 2012 by Taehyun Rhee
-//
-// Edited by Roma Klapaukh, Daniel Atkins, and Taehyun Rhee
-//
-//---------------------------------------------------------------------------
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <iostream>
@@ -41,7 +24,6 @@ GLuint g_mainWnd;
 GLuint g_nWinWidth = G308_WIN_WIDTH;
 GLuint g_nWinHeight = G308_WIN_HEIGHT;
 
-float zoom, rotx, roty, tx, ty = 0.0f;
 int lastx, lasty = 0;
 
 unsigned char buttons[3] = { 0 };
@@ -208,7 +190,7 @@ void G308_display() {
 
 	glPushMatrix();
 
-	camera->RotateCamera(zoom, tx, ty, rotx, roty);
+	camera->RotateCamera();
 
 	/*
 	 * Draw stuff here!
@@ -254,13 +236,13 @@ void mouseMotion (int x, int y){
 		}
 		// Change the view point of the scene.
 		else if (buttons[2]) {
-			zoom -= (float) 0.05f * diffy;
+			camera->zoom -= (float) 0.05f * diffy;
 		} else if (buttons[0]) {
-			rotx += (float) 0.5f * diffy;
-			roty += (float) 0.5f * diffx;
+			camera->rotx += (float) 0.5f * diffy;
+			camera->roty += (float) 0.5f * diffx;
 		} else if (buttons[1]) {
-			tx += (float) 0.05f * diffx;
-			ty -= (float) 0.05f * diffy;
+			camera->tx += (float) 0.05f * diffx;
+			camera->ty -= (float) 0.05f * diffy;
 		}
 		glutPostRedisplay();
 }

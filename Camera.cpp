@@ -12,7 +12,7 @@
 #include <GL/glut.h>
 
 Camera::Camera() {
-	// TODO Auto-generated constructor stub
+	zoom, rotx, roty, tx, ty = 0.0f;
 
 }
 
@@ -35,7 +35,7 @@ void Camera::SetInitialCameraPosition(double winWidth, double winHeight) {
 	//gluLookAt(0.0, 0.0, 80.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0);
 }
 
-void Camera::RotateCamera(float zoom, float tx, float ty, float rotx, float roty){
+void Camera::RotateCamera(){
 	glTranslatef(tx, ty, -zoom);
 	glRotatef(rotx, 1, 0, 0);
 	glRotatef(roty, 0, 1, 0);
