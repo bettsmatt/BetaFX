@@ -31,9 +31,22 @@
 #include "Collision.h"
 #include "Ball.h"
 
+#include "Camera.h"
+#include "BSpline.h"
+#include "Point.h"
+#include "Shape.h"
+
+#define NUM_KNOTS 8
+#define NUM_POINTS 4
+
 GLuint g_mainWnd;
 GLuint g_nWinWidth = G308_WIN_WIDTH;
 GLuint g_nWinHeight = G308_WIN_HEIGHT;
+
+float zoom, rotx, roty, tx, ty = 0.0f;
+int lastx, lasty = 0;
+
+unsigned char buttons[3] = { 0 };
 
 void G308_keyboardListener(unsigned char, int, int);
 void G308_Reshape(int w, int h);
@@ -61,6 +74,12 @@ Collision* collision;
 G308_Geometry** geometry = NULL;
 Ball** balls = NULL;
 int numGeo, hitCount = 0;
+Camera* camera = NULL;
+BSpline* bspline = NULL;
+Shape* shape = NULL;
+Point points[5] = { Point(15,10,0), Point(5,10,2), Point(-5,0,0), Point(-10,5,-2), Point(-15,5,-2)};
+
+int key_held = 0;
 
 void loadTexture(char*, GLuint);
 
@@ -99,6 +118,11 @@ int main(int argc, char** argv) {
 
 	camAngle = 0;
 	camHeight = 0;
+
+	shape = new Shape();
+	bspline = new BSpline(points, 5);
+	camera = new Camera();
+	camera->SetInitialCameraPosition((double) g_nWinWidth, (double) g_nWinHeight);
 
 	G308_init();
 	glutIdleFunc(tick);
@@ -146,9 +170,9 @@ void tick (){
 	}
 	for(int i = 0; i < maxBalls; i++){
 		for(int j = 0; j < maxBalls; j++){
-			if(i != j){
+			if(i != j && c->checkIfCollided(balls[i], balls[j])){
 				int error = 0;
-				c->collision3D(1, 10, 10, 10, 10, balls[i]->position, balls[j]->position, balls[i]->velocity, balls[j]->velocity, error);
+				c->collision3D(1, 10, 10, 2, 2, balls[i]->position, balls[j]->position, balls[i]->velocity, balls[j]->velocity, error);
 			}
 		}
 	}
@@ -186,7 +210,7 @@ void tick (){
 // Init Light and Camera
 void G308_init() {
 	G308_SetLight();
-	G308_SetCamera();
+	//	G308_SetCamera();
 }
 
 // Display call back
@@ -210,9 +234,14 @@ void G308_display() {
 
 	glPushMatrix();
 
+	camera->RotateCamera(zoom, tx, ty, rotx, roty);
+
 	/*
 	 * Draw stuff here!
 	 */
+
+	// Draw the spline with the control points
+	bspline->drawSpline();
 
 	/*
 	 * Draw the particle emmiter and it's particles
@@ -236,14 +265,64 @@ void G308_display() {
  * Mouse Movement
  */
 void mouseMotion (int x, int y){
+	int diffx = x - lastx;
+	int diffy = y - lasty;
+	lastx = x;
+	lasty = y;
 
+	// Changing position of selected control point.
+	if(buttons[0] && key_held == MOVE_ALONG_X){
+		points[bspline->getPointSelected()].x += (float) 0.05f * diffx;
+	}
+	else if(buttons[0] && key_held == MOVE_ALONG_Y){
+		points[bspline->getPointSelected()].y += (float) 0.05f * diffy;
+	}
+	else if(buttons[0] && key_held == MOVE_ALONG_Z){
+		points[bspline->getPointSelected()].z += (float) 0.05f * diffy;
+	}
+	// Change the view point of the scene.
+	else if (buttons[2]) {
+		zoom -= (float) 0.05f * diffy;
+	} else if (buttons[0]) {
+		rotx += (float) 0.5f * diffy;
+		roty += (float) 0.5f * diffx;
+	} else if (buttons[1]) {
+		tx += (float) 0.05f * diffx;
+		ty -= (float) 0.05f * diffy;
+	}
+	glutPostRedisplay();
 }
 
 /*
  * Mouse Clicks
+ *
+ * Left click - rotate the scene
+ * Middle click - pan
+ * Right click - zoom in and out
  */
-void mouse (int button, int state, int x, int y){
+void mouse (int b, int s, int x, int y){
+	lastx = x;
+	lasty = y;
 
+	bspline->deselectPoint();
+
+	// This one is for selecting a control point and changing its position.
+	if(b == GLUT_LEFT_BUTTON && s == GLUT_DOWN
+			&& (key_held == MOVE_ALONG_X || key_held == MOVE_ALONG_Y || key_held == MOVE_ALONG_Z)){
+		bspline->selectPoint(x, y);
+		buttons[0] = ((GLUT_DOWN == s) ? 1 : 0);
+	}
+	else if(b == GLUT_LEFT_BUTTON){
+		buttons[0] = ((GLUT_DOWN == s) ? 1 : 0);
+	}
+	else if(b == GLUT_MIDDLE_BUTTON){
+		buttons[1] = ((GLUT_DOWN == s) ? 1 : 0);
+	}
+	else if(b == GLUT_RIGHT_BUTTON){
+		buttons[2] = ((GLUT_DOWN == s) ? 1 : 0);
+	}
+
+	glutPostRedisplay();
 }
 
 /*
@@ -309,6 +388,18 @@ void G308_keyboardListener(unsigned char key, int x, int y) {
 
 	if(key == '2')
 		camHeight -= 1;
+
+	// b,n,m decide which coordinate of the control point to change.
+	key_held = 0;
+	if (key == 'b') {
+		key_held = MOVE_ALONG_X;
+	}
+	else if (key == 'n') {
+		key_held = MOVE_ALONG_Y;
+	}
+	else if (key == 'm') {
+		key_held = MOVE_ALONG_Z;
+	}
 }
 
 
@@ -371,15 +462,18 @@ void G308_SetLight() {
 void createBalls(){
 	balls = new Ball*[maxBalls];
 	for(int i = 0; i < maxBalls; i++){
-		float HI = 0.02f;
-		float LO = -0.02f;
+		if(i == 0){
+			float v[3] = {-0.01f, -0.00f, 0.0f};
+			float p[3] = {3.0f, 0.0f, 0.0f};
 
-		float* v = (float*) malloc(sizeof(float) * 3);
-		v[0] = LO + (float)rand()/((float)RAND_MAX/(HI-LO));
-		v[1] = LO + (float)rand()/((float)RAND_MAX/(HI-LO));
-		v[2] = LO + (float)rand()/((float)RAND_MAX/(HI-LO));
+			balls[i] = new Ball(p, v);
+		}
+		if(i == 1){
+			float v[3] = {0.01f, 0.01f, 0.0f};
+			float p[3] = {-3.0f, -3.0f, 0.0f};
 
-		balls[i] = new Ball(v);
+			balls[i] = new Ball(p, v);
+		}
 	}
 
 }

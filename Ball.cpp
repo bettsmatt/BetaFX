@@ -20,7 +20,7 @@
 #include <stdlib.h>
 #include <math.h>
 
-Ball::Ball(float* initialVelocity) {
+Ball::Ball(float* initialPosition, float* initialVelocity) {
 
 	// Zero
 	position = new float[3];
@@ -30,6 +30,9 @@ Ball::Ball(float* initialVelocity) {
 	// Set initial velocity
 	for(int i = 0 ; i < 3 ; i ++)
 		velocity[i] = initialVelocity[i];
+
+	for(int i = 0 ; i < 3 ; i ++)
+		position[i] = initialPosition[i];
 
 	mass = 1; // Default
 
@@ -66,6 +69,7 @@ void Ball::renderBall() {
 
 	glPushMatrix();
 
+	glColor3f(0.5f, 0.5f, 0.5f);
 	glTranslatef(
 			position[0],
 			position[1],

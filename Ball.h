@@ -23,15 +23,12 @@
 class Ball
 {
 private:
-
-
 	float* acceletation; // x, y, z
 	float mass;
 
-
 public:
 
-	Ball(float*); // Initial velocity
+	Ball(float*, float*); // Initial velocity
 	~Ball(void);
 
 	void tick(); // Simulate one frame

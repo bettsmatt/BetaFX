@@ -7,13 +7,14 @@
 
 #include "Collision.h"
 #include "math.h"
+#include "stdio.h"
 
 Collision::Collision() {}
 
 Collision::~Collision() {}
 
 bool Collision::checkIfCollided(Ball* b1, Ball* b2){
-	if(calculateVectorDistance(b1->position, b2->position) < 4) return true;
+	if(calculateVectorDistance(b1->position, b2->position) < 2) return true;
 	return false;
 }
 
@@ -29,7 +30,7 @@ float Collision::calculateVectorDistance(float *v1, float* v2)
 
 void Collision::collision3D(double cor, double mass1, double mass2, double radius1, double radius2,
 		float* pos1, float* pos2, float* vel1, float* vel2, int error){
-
+	printf("Ball1 pos1[1]: %f    ", pos1[0]);
 	// Initialize
 	error = 0;
 	float pi = acos(-1.0E0);
@@ -45,18 +46,6 @@ void Collision::collision3D(double cor, double mass1, double mass2, double radiu
 	// Calculate relative distance and Velocity
 	float relativeDistance = sqrt(distance[0] * distance[0] + distance[1] * distance[1] + distance[2] * distance[2]);
 	float relativeVelocity = sqrt(velocity[0] * velocity[0] + velocity[1] * velocity[1] + velocity[2] * velocity[2]);
-
-	// Return if distance between balls smaller than sum of radii
-	if (relativeDistance < totalRadius || relativeVelocity == 0) {
-		error = 2;
-		if (relativeVelocity == 0) error = 1;
-		return;
-	}
-
-	// Shift coordinate system so that ball 1 is at the origin
-	pos2[0] = distance[0];
-	pos2[1] = distance[1];
-	pos2[2] = distance[2];
 
 	// Boost coordinate system so that ball 2 is resting
 	vel1[0] = -velocity[0];
@@ -88,38 +77,13 @@ void Collision::collision3D(double cor, double mass1, double mass2, double radiu
 	// Calculate the normalized impact parameter
 	float dr = relativeDistance * sin(thetav) / totalRadius;
 
-	//     **** return old positions and velocities if balls do not collide ***
-	/*if (thetav > pi / 2 || fabs(dr) > 1) {
-		pos2[0]=pos2[0]+pos1[0];
-		pos2[1]=pos2[1]+pos1[1];
-		pos2[2]=pos2[2]+pos1[2];
-		vel1[0]=vel1[0]+vel2[0];
-		vel1[1]=vel1[1]+vel2[1];
-		vel1[2]=vel1[2]+vel2[2];
-		error=1;
-		return;
-	}*/
-
 	// Calculate impact angle
 	float impactAngle1 = asin(-dr);
 	float impactAngle2 = atan2(vy1r, vx1r);
 	if (vx1r == 0 && vy1r == 0) impactAngle2 = 0;
 
-
-
 	// Calculate time to collision
 	float t= (relativeDistance * cos(thetav) - totalRadius * sqrt(1 - dr * dr)) / relativeVelocity;
-
-
-	// Update positions and reverse the coordinate shift
-	pos2[0] = pos2[0] + vel2[0] * t + pos1[0];
-	pos2[1] = pos2[1] + vel2[1] * t + pos1[1];
-	pos2[2] = pos2[2] + vel2[2] * t + pos1[2];
-	pos1[0] = (vel1[0] + vel2[0]) * t + pos1[0];
-	pos1[1] = (vel1[1] + vel2[1]) * t + pos1[1];
-	pos1[2] = (vel1[2] + vel2[2]) * t + pos1[2];
-
-
 
 	// Update velocities
 	float a = tan(thetav+impactAngle1 );
@@ -149,5 +113,11 @@ void Collision::collision3D(double cor, double mass1, double mass2, double radiu
 	vel2[1] = (vel2[1] - vy_cm) * cor + vy_cm;
 	vel2[2] = (vel2[2] - vz_cm) * cor + vz_cm;
 
+	for(int i = 0; i < 3; i++){
+			pos1[i] += vel1[i];
+			pos2[i] += vel2[i];
+	}
+
+	printf("Ball1 pos1[1]: %f\n", pos1[0]);
 	return;
 }
