@@ -49,6 +49,10 @@ void menu (int);
 void tick();
 void createBalls();
 
+float camAngle;
+float camHeight;
+int maxBalls;
+
 /*
  * Particle Emitter
  */
@@ -80,7 +84,7 @@ int main(int argc, char** argv) {
 	glutDisplayFunc(G308_display);
 	glutReshapeFunc(G308_Reshape);
 
-
+	maxBalls = 2;
 	particeEmitter = new ParticleEmitter();
 	float* v = new float[3];
 	v[0] = 0;
@@ -91,6 +95,10 @@ int main(int argc, char** argv) {
 	collision = new Collision();
 
 	createBalls();
+	loadTexture("sprite2.png", 1);
+
+	camAngle = 0;
+	camHeight = 0;
 
 	G308_init();
 	glutIdleFunc(tick);
@@ -108,7 +116,7 @@ void loadTexture (char* filename, GLuint id){
 
 	texInfo* t = (texInfo*) malloc(sizeof(texInfo));
 
-	loadTextureFromJPEG(filename, t);
+	loadTextureFromPNG(filename, t);
 
 	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 	glGenTextures(1, &id);
@@ -118,7 +126,7 @@ void loadTexture (char* filename, GLuint id){
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, t->width, t->height, 0, GL_RGB,
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, t->width, t->height, 0, GL_RGBA,
 			GL_UNSIGNED_BYTE, t->textureData);
 }
 
@@ -126,22 +134,52 @@ void loadTexture (char* filename, GLuint id){
  * Do stuff, in the background
  */
 void tick (){
+
+	Collision* c = new Collision;
+	/*
+	 * Simulate a frame in the particle emitter
+	 */
 	particeEmitter->tick();
 	particeEmitter->emit();
-	for(int i = 0; i < 10; i ++){
+	for(int i = 0; i < maxBalls; i ++){
 		balls[i]->tick();
 	}
-	for(int i = 0; i < 10; i++){
-		for(int j = 0; j < 10; j++){
-			if(collision->checkIfCollided(balls[i], balls[j]) && i != j){
-				hitCount++;
-				printf("hit: %d\n", hitCount);
+	for(int i = 0; i < maxBalls; i++){
+		for(int j = 0; j < maxBalls; j++){
+			if(i != j){
+				int error = 0;
+				c->collision3D(1, 10, 10, 10, 10, balls[i]->position, balls[j]->position, balls[i]->velocity, balls[j]->velocity, error);
 			}
 		}
 	}
 
 
+
+
+
+	/*
+	 * Rotate the camera for effect
+	 */
+
+
+	glMatrixMode(GL_PROJECTION);
+	glLoadIdentity();
+	gluPerspective(G308_FOVY, (double) g_nWinWidth / (double) g_nWinHeight, G308_ZNEAR_3D, G308_ZFAR_3D);
+	glMatrixMode(GL_MODELVIEW);
+	glLoadIdentity();
+
+	float x = sin(camAngle) * 50.0f;
+	float z = cos(camAngle) * 50.0f;
+
+	gluLookAt(
+			x,camHeight,z,
+			0,0,0,
+			0,1,0
+	);
+
+	//camAngle+= 0.005f;
 	G308_display();
+	free(c);
 }
 
 
@@ -158,8 +196,6 @@ void G308_display() {
 
 	glEnable(GL_LIGHTING);
 	glEnable(GL_LIGHT0);
-	glEnable(GL_LIGHT1);
-	glEnable(GL_LIGHT2);
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_COLOR_MATERIAL);
 
@@ -178,26 +214,18 @@ void G308_display() {
 	 * Draw stuff here!
 	 */
 
-	//glutWireSphere(3,100,100);
-
 	/*
-	 * Particle Emitter
+	 * Draw the particle emmiter and it's particles
 	 */
 	particeEmitter->renderParticles();
 
-	for(int i = 0; i < 10; i ++){
-		balls[i]->renderBall();
-	}
+	for(int i = 0; i < maxBalls; i ++) balls[i]->renderBall();
 
 
 	glPopMatrix();
 
-
-
 	glDisable(GL_DEPTH_TEST);
 	glDisable(GL_LIGHTING);
-	glDisable(GL_LIGHT2);
-	glDisable(GL_LIGHT1);
 	glDisable(GL_LIGHT0);
 	glDisable(GL_COLOR_MATERIAL);
 
@@ -223,12 +251,72 @@ void mouse (int button, int state, int x, int y){
  */
 void G308_keyboardListener(unsigned char key, int x, int y) {
 
+	/*
+	 * Particle Wind Controls
+	 */
+
+	float* wind = new float [3];
+	wind[0] = 0; wind[1] = 0; wind[2] = 0;
+
+	if(key == 'i')
+	{
+		wind[1] = 0.1f;
+		particeEmitter->applyWind(wind);
+
+	}
+
+	if(key == 'k')
+	{
+		wind[1] = -0.1f;
+		particeEmitter->applyWind(wind);
+
+	}
+
+	if(key == 'j')
+	{
+		wind[0] = -0.1f;
+		particeEmitter->applyWind(wind);
+
+	}
+
+	if(key == 'l')
+	{
+		wind[0] = 0.1f;
+		particeEmitter->applyWind(wind);
+
+	}
+
+	if(key == 'g'){
+		if(particeEmitter->isGravityOn())
+			particeEmitter->turnGravityOff();
+		else
+			particeEmitter->turnGravityOn();
+	}
+
+	if(key == 'e')
+		for(int i = 0 ; i < 50 ; i ++)
+			particeEmitter->emit();
+
+
+	if(key == '4')
+		camAngle += 0.05f;
+
+	if(key == '6')
+		camAngle -= 0.05f;
+
+	if(key == '8')
+		camHeight += 1;
+
+	if(key == '2')
+		camHeight -= 1;
 }
+
 
 /*
  * Reshape function
  */
 void G308_Reshape(int w, int h) {
+
 	if (h == 0)
 		h = 1;
 
@@ -250,7 +338,7 @@ void G308_SetCamera() {
 	glLoadIdentity();
 
 	gluLookAt(
-			0, 0, 200,
+			30, 30, 30,
 			0, 0, 0,
 			0, 1, 0
 	);
@@ -260,12 +348,29 @@ void G308_SetCamera() {
 // Set View Position
 void G308_SetLight() {
 
+	/*
+	 * Ambient
+	 */
+	GLfloat ambientG[] = { 1, 1, 1, 1 };
+	glLightModelfv(GL_LIGHT_MODEL_AMBIENT,ambientG);
+
+	/*
+	 * Point Light
+	 */
+	GLfloat positionPoint[] = { 0, 0, 0, 1 };
+	float diffusePoint[] = { 1, 1, 1, 1 };
+	float specularPoint[] = { 1, 1, 1, 1 };
+
+	glLightfv(GL_LIGHT0, GL_POSITION, positionPoint);
+	glLightfv(GL_LIGHT0, GL_DIFFUSE, diffusePoint);
+	glLightfv(GL_LIGHT0, GL_SPECULAR, specularPoint);
+
 
 }
 
 void createBalls(){
-	balls = (Ball**) malloc (sizeof(Ball*) * 10);
-	for(int i = 0; i < 10; i++){
+	balls = new Ball*[maxBalls];
+	for(int i = 0; i < maxBalls; i++){
 		float HI = 0.02f;
 		float LO = -0.02f;
 

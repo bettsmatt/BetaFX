@@ -72,7 +72,7 @@ void Ball::renderBall() {
 			position[2]
 	);
 
-	glutSolidSphere(2,20,20);
+	glutSolidSphere(1,20,20);
 
 	glPopMatrix();
 

@@ -24,7 +24,7 @@ class Ball
 {
 private:
 
-	float* velocity; // x, y, z
+
 	float* acceletation; // x, y, z
 	float mass;
 
@@ -40,4 +40,5 @@ public:
 	void applyForce(float*); // Apply force to the particle, x, y, z
 
 	float* position; // x, y, z
+	float* velocity; // x, y, z
 };

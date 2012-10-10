@@ -28,7 +28,11 @@ private:
 	float* velocity; // x, y, z
 	float* acceletation; // x, y, z
 	float mass;
+
+	int lifeSpan;
 	int lifeSpanLeft;
+
+	float* color;
 
 
 public:
@@ -39,6 +43,15 @@ public:
 	void tick(); // Simulate one frame
 	bool isDead(); // Particle has expired
 	void renderParticle(); // Draw the particle
+
 	void applyForce(float*); // Apply force to the particle, x, y, z
+	void applyFriction (float);
+	static void applyAttractiveForce (Particle*, Particle*, float, float);
+
+	void setPosition (float*); // Set the position
+
+
 
 };
+
+

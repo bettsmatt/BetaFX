@@ -27,142 +27,127 @@ float Collision::calculateVectorDistance(float *v1, float* v2)
 }
 
 
-void collisiond3D(double R, double m1, double m2, double r1, double r2,
-		float* pos1, float* pos2, float* vel1, float* vel2, int error)     {
+void Collision::collision3D(double cor, double mass1, double mass2, double radius1, double radius2,
+		float* pos1, float* pos2, float* vel1, float* vel2, int error){
 
-//     **** initialize some variables ****
-       float pi=acos(-1.0E0);
-       error=0;
-       float r12=r1+r2;
-       float m21 = m2 / m1;
-       float x21 = pos2[0] - pos1[0];
-       float y21 = pos2[1] - pos1[1];
-       float z21 = pos2[2] - pos1[2];
-       float vx21 = vel2[0] - vel1[0];
-       float vy21 = vel2[1] - vel1[1];
-       float vz21 = vel2[2] - vel1[2];
+	// Initialize
+	error = 0;
+	float pi = acos(-1.0E0);
+	float totalRadius = radius1 + radius2;
+	float totalMass = mass2 / mass1;
+	float distance[3] =  {pos2[0] - pos1[0], pos2[1] - pos1[1], pos2[2] - pos1[2]};
+	float velocity[3] = {vel2[0] - vel1[0], vel2[1] - vel1[1], vel2[2] - vel1[2]};
 
-       float vx_cm = (m1*vel1[0]+m2*vel2[0])/(m1+m2) ;
-       float vy_cm = (m1*vel1[1]+m2*vel2[1])/(m1+m2) ;
-       float vz_cm = (m1*vel1[2]+m2*vel2[2])/(m1+m2) ;
+	float vx_cm = (mass1 * vel1[0] + mass2 * vel2[0]) / (mass1 + mass2) ;
+	float vy_cm = (mass1 * vel1[1] + mass2 * vel2[1]) / (mass1 + mass2) ;
+	float vz_cm = (mass1 * vel1[2] + mass2 * vel2[2]) / (mass1 + mass2) ;
 
+	// Calculate relative distance and Velocity
+	float relativeDistance = sqrt(distance[0] * distance[0] + distance[1] * distance[1] + distance[2] * distance[2]);
+	float relativeVelocity = sqrt(velocity[0] * velocity[0] + velocity[1] * velocity[1] + velocity[2] * velocity[2]);
 
-//     **** calculate relative distance and relative speed ***
-       float d = sqrt(x21*x21 +y21*y21 +z21*z21);
-       float v = sqrt(vx21*vx21 +vy21*vy21 +vz21*vz21);
+	// Return if distance between balls smaller than sum of radii
+	if (relativeDistance < totalRadius || relativeVelocity == 0) {
+		error = 2;
+		if (relativeVelocity == 0) error = 1;
+		return;
+	}
 
-//     **** return if distance between balls smaller than sum of radii ****
-       if (d<r12) {error=2; return;}
+	// Shift coordinate system so that ball 1 is at the origin
+	pos2[0] = distance[0];
+	pos2[1] = distance[1];
+	pos2[2] = distance[2];
 
-//     **** return if relative speed = 0 ****
-       if (v==0) {error=1; return;}
+	// Boost coordinate system so that ball 2 is resting
+	vel1[0] = -velocity[0];
+	vel1[1] = -velocity[1];
+	vel1[2] = -velocity[2];
 
+	// Find the polar coordinates of the location of ball 2
+	float phi2 = 0;
+	if (pos2[0] == 0 && pos2[1] == 0) phi2 = 0;
+	else phi2 = atan2(pos2[1], pos2[0]);
 
-//     **** shift coordinate system so that ball 1 is at the origin ***
-       pos2[0]=x21;
-       pos2[1]=y21;
-       pos2[2]=z21;
+	float st = sin(acos(pos2[2]/relativeDistance));
+	float ct = cos(acos(pos2[2]/relativeDistance));
+	float sp = sin(phi2);
+	float cp = cos(phi2);
 
-//     **** boost coordinate system so that ball 2 is resting ***
-       vel1[0]=-vx21;
-       vel1[1]=-vy21;
-       vel1[2]=-vz21;
+	// Express the velocity vector of ball 1 in a rotated coordinate
+	// System where ball 2 lies on the z-axis
+	float vx1r=ct*cp*vel1[0]+ct*sp*vel1[1]-st*vel1[2];
+	float vy1r=cp*vel1[1]-sp*vel1[0];
+	float vz1r=st*cp*vel1[0]+st*sp*vel1[1]+ct*vel1[2];
+	float fvz1r = vz1r/relativeVelocity ;
+	if (fvz1r>1) {fvz1r=1;}   // fix for possible rounding errors
+	else if (fvz1r<-1) {fvz1r=-1;}
 
-//     **** find the polar coordinates of the location of ball 2 ***
-       float phi2 = 0;
-       if (pos2[0]==0 && pos2[1]==0) {phi2=0;} else {phi2=atan2(pos2[1],pos2[0]);}
-       float st=sin(acos(pos2[2]/d));
-       float ct=cos(acos(pos2[2]/d));
-       float sp=sin(phi2);
-       float cp=cos(phi2);
-
-
-//     **** express the velocity vector of ball 1 in a rotated coordinate
-//          system where ball 2 lies on the z-axis ******
-       float vx1r=ct*cp*vel1[0]+ct*sp*vel1[1]-st*vel1[2];
-       float vy1r=cp*vel1[1]-sp*vel1[0];
-       float vz1r=st*cp*vel1[0]+st*sp*vel1[1]+ct*vel1[2];
-       float fvz1r = vz1r/v ;
-       if (fvz1r>1) {fvz1r=1;}   // fix for possible rounding errors
-          else if (fvz1r<-1) {fvz1r=-1;}
+	float thetav=acos(fvz1r);
 
 
+	// Calculate the normalized impact parameter
+	float dr = relativeDistance * sin(thetav) / totalRadius;
 
-       float thetav=acos(fvz1r);
+	//     **** return old positions and velocities if balls do not collide ***
+	/*if (thetav > pi / 2 || fabs(dr) > 1) {
+		pos2[0]=pos2[0]+pos1[0];
+		pos2[1]=pos2[1]+pos1[1];
+		pos2[2]=pos2[2]+pos1[2];
+		vel1[0]=vel1[0]+vel2[0];
+		vel1[1]=vel1[1]+vel2[1];
+		vel1[2]=vel1[2]+vel2[2];
+		error=1;
+		return;
+	}*/
 
-
-
-//     **** calculate the normalized impact parameter ***
-       float dr=d*sin(thetav)/r12;
-
-
-//     **** return old positions and velocities if balls do not collide ***
-       if (thetav>pi/2 || fabs(dr)>1) {
-           pos2[0]=pos2[0]+pos1[0];
-           pos2[1]=pos2[1]+pos1[1];
-           pos2[2]=pos2[2]+pos1[2];
-           vel1[0]=vel1[0]+vel2[0];
-           vel1[1]=vel1[1]+vel2[1];
-           vel1[2]=vel1[2]+vel2[2];
-           error=1;
-           return;
-        }
-
-//     **** calculate impact angles if balls do collide ***
-       float alpha=asin(-dr);
-
-
-       float beta = atan2(vy1r,vx1r);
-       if (vx1r==0 && vy1r==0) beta = 0;
+	// Calculate impact angle
+	float impactAngle1 = asin(-dr);
+	float impactAngle2 = atan2(vy1r, vx1r);
+	if (vx1r == 0 && vy1r == 0) impactAngle2 = 0;
 
 
 
-//     **** calculate time to collision ***
-       float t=(d*cos(thetav) -r12*sqrt(1-dr*dr))/v;
+	// Calculate time to collision
+	float t= (relativeDistance * cos(thetav) - totalRadius * sqrt(1 - dr * dr)) / relativeVelocity;
 
 
-//     **** update positions and reverse the coordinate shift ***
-       pos2[0]=pos2[0]+vel2[0]*t +pos1[0];
-       pos2[1]=pos2[1]+vel2[1]*t +pos1[1];
-       pos2[2]=pos2[2]+vel2[2]*t +pos1[2];
-       pos1[0]=(vel1[0]+vel2[0])*t +pos1[0];
-       pos1[1]=(vel1[1]+vel2[1])*t +pos1[1];
-       pos1[2]=(vel1[2]+vel2[2])*t +pos1[2];
+	// Update positions and reverse the coordinate shift
+	pos2[0] = pos2[0] + vel2[0] * t + pos1[0];
+	pos2[1] = pos2[1] + vel2[1] * t + pos1[1];
+	pos2[2] = pos2[2] + vel2[2] * t + pos1[2];
+	pos1[0] = (vel1[0] + vel2[0]) * t + pos1[0];
+	pos1[1] = (vel1[1] + vel2[1]) * t + pos1[1];
+	pos1[2] = (vel1[2] + vel2[2]) * t + pos1[2];
 
 
 
-//  ***  update velocities ***
-       float a = tan(thetav+alpha);
-
-       float dvz2=2*(vz1r+a*(cos(beta)*vx1r+sin(beta)*vy1r))/((1+a*a)*(1+m21));
-
-       float vz2r=dvz2;
-       float vx2r=a*cos(beta)*dvz2;
-       float vy2r=a*sin(beta)*dvz2;
-       vz1r=vz1r-m21*vz2r;
-       vx1r=vx1r-m21*vx2r;
-       vy1r=vy1r-m21*vy2r;
+	// Update velocities
+	float a = tan(thetav+impactAngle1 );
+	float dvz2=2*(vz1r+a*(cos(impactAngle2)*vx1r+sin(impactAngle2)*vy1r))/((1+a*a)*(1+totalMass));
+	float vz2r=dvz2;
+	float vx2r=a*cos(impactAngle2)*dvz2;
+	float vy2r=a*sin(impactAngle2)*dvz2;
+	vz1r=vz1r-totalMass*vz2r;
+	vx1r=vx1r-totalMass*vx2r;
+	vy1r=vy1r-totalMass*vy2r;
 
 
-//     **** rotate the velocity vectors back and add the initial velocity
-//           vector of ball 2 to retrieve the original coordinate system ****
-
-       vel1[0]=ct*cp*vx1r-sp*vy1r+st*cp*vz1r +vel2[0];
-       vel1[1]=ct*sp*vx1r+cp*vy1r+st*sp*vz1r +vel2[1];
-       vel1[2]=ct*vz1r-st*vx1r               +vel2[2];
-       vel2[0]=ct*cp*vx2r-sp*vy2r+st*cp*vz2r +vel2[0];
-       vel2[1]=ct*sp*vx2r+cp*vy2r+st*sp*vz2r +vel2[1];
-       vel2[2]=ct*vz2r-st*vx2r               +vel2[2];
+	// Rotate the velocity vectors back and add the initial velocity vector of ball 2 to retrieve the original coordinate system
+	vel1[0]= ct * cp * vx1r - sp * vy1r + st * cp * vz1r + vel2[0];
+	vel1[1]= ct * sp * vx1r + cp * vy1r + st * sp * vz1r + vel2[1];
+	vel1[2]= ct * vz1r - st * vx1r +vel2[2];
+	vel2[0]= ct * cp * vx2r - sp * vy2r + st * cp * vz2r + vel2[0];
+	vel2[1]= ct * sp * vx2r + cp * vy2r + st * sp * vz2r + vel2[1];
+	vel2[2]= ct * vz2r - st * vx2r +vel2[2];
 
 
-//     ***  velocity correction for inelastic collisions ***
+	// Velocity correction for inelastic collisions
+	vel1[0] = (vel1[0] - vx_cm) * cor + vx_cm;
+	vel1[1] = (vel1[1] - vy_cm) * cor + vy_cm;
+	vel1[2] = (vel1[2] - vz_cm) * cor + vz_cm;
+	vel2[0] = (vel2[0] - vx_cm) * cor + vx_cm;
+	vel2[1] = (vel2[1] - vy_cm) * cor + vy_cm;
+	vel2[2] = (vel2[2] - vz_cm) * cor + vz_cm;
 
-       vel1[0]=(vel1[0]-vx_cm)*R + vx_cm;
-       vel1[1]=(vel1[1]-vy_cm)*R + vy_cm;
-       vel1[2]=(vel1[2]-vz_cm)*R + vz_cm;
-       vel2[0]=(vel2[0]-vx_cm)*R + vx_cm;
-       vel2[1]=(vel2[1]-vy_cm)*R + vy_cm;
-       vel2[2]=(vel2[2]-vz_cm)*R + vz_cm;
-
-       return;
+	return;
 }

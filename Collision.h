@@ -17,6 +17,7 @@ public:
 
 	bool checkIfCollided(Ball*, Ball*);
 	float calculateVectorDistance(float*, float*);
+	void collision3D(double, double, double, double, double, float*, float*, float*, float*, int);
 };
 
 #endif /* COLLISION_H_ */

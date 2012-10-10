@@ -33,6 +33,17 @@ ParticleEmitter::ParticleEmitter(void) {
 	index = 0;
 	created = 0;
 
+	gravityOn = false;
+	float* v = new float[3];
+	gravity = new Particle(v);
+
+	float* p = new float[3];
+	p[0] = 5;
+	p[1] = 0;
+
+	setGravity(p);
+	gravityOn=true;
+
 }
 
 ParticleEmitter::~ParticleEmitter(void) {
@@ -48,18 +59,26 @@ ParticleEmitter::~ParticleEmitter(void) {
 
 }
 
+bool ParticleEmitter::isGravityOn(){
+	return gravityOn;
+}
+
 void ParticleEmitter::emit(){
 
-	/*
-	 * No Initial velocity
-	 */
-	float HI = 0.02f;
-	float LO = -0.02f;
 
-	float* v = (float*) malloc(sizeof(float) * 3);
-	v[0] = LO + (float)rand()/((float)RAND_MAX/(HI-LO));
-	v[1] = LO + (float)rand()/((float)RAND_MAX/(HI-LO));
-	v[2] = LO + (float)rand()/((float)RAND_MAX/(HI-LO));
+	float XHI = 0.1f;
+	float XLO = -0.1f;
+
+	float YHI = 0.1f;
+	float YLO = -0.1f;
+
+	float ZHI = 0.3f;
+	float ZLO = 0.2f;
+
+	float* v = new float[3];
+	v[0] = XLO + (float)rand()/((float)RAND_MAX/(XHI-XLO));
+	v[1] = YLO + (float)rand()/((float)RAND_MAX/(YHI-YLO));
+	v[2] = ZLO + (float)rand()/((float)RAND_MAX/(ZHI-ZLO));
 	int start = index;
 
 
@@ -91,19 +110,12 @@ void ParticleEmitter::emit(){
 			}
 	}
 
-found:; // Never again...
-
-//free(v);
-
+	found:; // Never again...
 
 }
 
 void ParticleEmitter::tick(){
 
-	/*
-	float* force = (float*) malloc (sizeof (float) * 3 );
-	force[0] = 0.02f; force[1] = 0.01f; force[2] = 0.06f;
-	 */
 	// Loop through all active particles drawing them
 	for(int i = 0; i < MAX_PARTICLES && i < created ; i ++)
 
@@ -111,10 +123,21 @@ void ParticleEmitter::tick(){
 		if(!particles[i]->isDead()){
 			//particles[i]->applyForce(force);
 			particles[i]->tick(); // Simulate
+			particles[i]->applyFriction(0.0001f);
+
+			if(gravityOn)
+				particles[i]->applyAttractiveForce(particles[i],gravity,-0.002f,100);
 
 		}
 
-	//free(force);
+}
+
+void ParticleEmitter::applyWind(float* wind){
+	for(int i = 0; i < MAX_PARTICLES && i < created ; i ++){
+		if(!particles[i]->isDead()){
+			particles[i]->applyForce(wind);
+		}
+	}
 }
 
 
@@ -167,19 +190,50 @@ void ParticleEmitter::setVector(float* v){
 
 }
 
+void ParticleEmitter::setGravity(float* pos){
+	gravity->setPosition(pos);
+}
+void ParticleEmitter::turnGravityOn(){
+	gravityOn = true;
+}
+void ParticleEmitter::turnGravityOff(){
+	gravityOn = false;
+}
+
 
 
 void ParticleEmitter::renderParticles() {
 
 	glPushMatrix();
 
-	// Rotate to face vector
+	// Rotate to face vector, might take this out
 	glRotatef(
 			orientation[0],
 			orientation[1],
 			orientation[2],
 			orientation[3]
 	);
+
+	glutWireCone(1,1,3,3);
+
+	glPopMatrix();
+	glPushMatrix();
+
+
+	/*
+	 * All particles have the same texture, so we do this here.
+	 */
+	glEnable(GL_TEXTURE_2D);
+	glDepthMask(0);
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glEnable(GL_POINT_SPRITE_ARB);
+
+	glBindTexture(GL_TEXTURE_2D, 1);
+	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 
 	// Loop through all active particles drawing them
 	for(int i = 0; i < MAX_PARTICLES && i < created ; i ++)
@@ -188,9 +242,17 @@ void ParticleEmitter::renderParticles() {
 		if(!particles[i]->isDead())
 			particles[i]->renderParticle(); // Render
 
+	glDisable(GL_BLEND);
+	glDisable(GL_POINT_SPRITE_ARB);
+	glDisable(GL_TEXTURE_2D);
 
-	glutWireCone(1,3,3,3);
+	gravity->renderParticle();
+
 
 	glPopMatrix();
+
+
+
+
 
 }
