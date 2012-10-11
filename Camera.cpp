@@ -7,6 +7,7 @@
 
 #include "Camera.h"
 #include "define.h"
+#include "Point.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <GL/glut.h>
@@ -28,7 +29,7 @@ void Camera::SetInitialCameraPosition(double winWidth, double winHeight) {
 	glLoadIdentity();
 
 	gluLookAt(
-				30, 30, 30,
+				0, 0, 50,
 				0, 0, 0,
 				0, 1, 0
 		);
@@ -49,4 +50,17 @@ void Camera::ResetCamera(float* zoom, float* tx, float* ty, float* rotx, float* 
 	*ty = 0;
 	*rotx = 0;
 	*roty = 0;
+}
+
+void Camera::moveTo(Point p, double winWidth, double winHeight){
+	glMatrixMode (GL_PROJECTION);
+	glLoadIdentity();
+	gluPerspective(G308_FOVY, winWidth / winHeight, G308_ZNEAR_3D, G308_ZFAR_3D);
+	glMatrixMode (GL_MODELVIEW);
+	glLoadIdentity();
+	gluLookAt(
+			p.x, p.y, p.z,
+			0, 0, 0,
+			0, 1, 0
+	);
 }

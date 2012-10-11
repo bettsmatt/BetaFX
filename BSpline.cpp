@@ -11,41 +11,39 @@
 #include <GL/glut.h>
 #include "Point.h"
 
+#define MAX_POINTS 20
+
 BSpline::BSpline() {
-	n = 2; // Degree of the curve
-	controlPointsNum = 0;
-	pointSelected = -1;
-	nV = NULL;
-	numSplinePieces = 0;
-	currentFrame = 0;
-	hasChanged = true;
+	controlPointsNum = 5;
+	controlPoints = new Point[MAX_POINTS];
+	controlPoints[0] = Point(15,10,0);
+	controlPoints[1] = Point(5,10,2);
+	controlPoints[2] = Point(-5,0,0);
+	controlPoints[3] = Point(-10,5,-2);
+	controlPoints[4] = Point(-15,5,-2);
 }
 
 BSpline::BSpline(Point* points, int num){
-	n = 2;
-	pointSelected = -1;
 	controlPoints = points;
 	controlPointsNum = num;
-	numSplinePieces = 0;
-	currentFrame = 0;
-	hasChanged = true;
-	nV = NULL;
-	assignColourId();
-	createNodeVector();
+
 }
 
 BSpline::~BSpline() {
-	delete[] nV;
+	if(nV != NULL) delete[] nV;
+	if(controlPoints != NULL) delete[] controlPoints;
 }
 
-void BSpline::setControlPoints(Point* points, int n){
-	controlPoints = points;
-	controlPointsNum = n;
+void BSpline::init(){
+	n = 2; // Degree of the curve
+	pointSelected = -1;
+	nV = NULL;
+	frames = NULL;
+	numSplinePieces = 0;
+	currentFrame = 0;
+	hasChanged = true;
 	assignColourId();
-}
-
-int BSpline::getPointSelected(){
-	return pointSelected;
+	createNodeVector();
 }
 
 // This part was done with the help from http://content.gpwiki.org/index.php/OpenGL_Selection_Using_Unique_Color_IDs
@@ -205,6 +203,7 @@ void BSpline::computeFrames(){
 	if (frames != NULL)
 			delete[] frames;
 
+	currentFrame = 0;
 	frames = new Point[numSplinePieces];
 	Point point = Point();
 	int k = 0;
@@ -227,6 +226,15 @@ Point BSpline::nextFrame(){
 	return p;
 }
 
+void BSpline::recalculate(){
+	//createNodeVector();
+	numSplinePieces = 0;
+	for(float i = 0.0f; i < nV[n + controlPointsNum]; i += 0.1f){
+		numSplinePieces++;
+	}
+	computeFrames();
+}
+
 void BSpline::deselectPoint(){
 	pointSelected = -1;
 }
@@ -242,6 +250,7 @@ void BSpline::selectPoint(int x, int y){
 	unsigned char pixel[3];
 	glGetIntegerv(GL_VIEWPORT, viewport); // get color information from frame buffer
 
+	//printf("pixel %i %i %i\n", pixel[0], pixel[1], pixel[2]);
 	glReadPixels(x, viewport[3] - y, 1, 1, GL_RGB, GL_UNSIGNED_BYTE, pixel);
 	for (int i = 0; i < controlPointsNum; i++) {
 		if(controlPoints[i].r == pixel[0] && controlPoints[i].g == pixel[1] && controlPoints[i].b == pixel[2]){
@@ -250,6 +259,53 @@ void BSpline::selectPoint(int x, int y){
 		}
 	}
 	glutPostRedisplay();
+}
+
+void BSpline::moveSelectedPoint(float f, char c){
+	switch(c){
+	case 'x':
+		controlPoints[pointSelected].x += f;
+		// Set a flag to recompute the frames
+		hasChanged = true;
+		break;
+	case 'y':
+		controlPoints[pointSelected].y += f;
+		// Set a flag to recompute the frames
+		hasChanged = true;
+		break;
+	case 'z':
+		controlPoints[pointSelected].z += f;
+		// Set a flag to recompute the frames
+		hasChanged = true;
+		break;
+	}
+}
+
+void BSpline::addPoint(float x, float y, float z) {
+	Point newp = Point(x, y, z);
+	controlPointsNum++;
+
+	if(controlPointsNum > MAX_POINTS){
+		printf("Maximum number of control points reached.\nCannot add a new point.\n");
+		return;
+	}
+	// Assign a colour ID to the new point`
+	float lastR, lastG, lastB;
+	lastR = controlPoints[controlPointsNum - 2].r;
+	lastG = controlPoints[controlPointsNum - 2].g;
+	lastB = controlPoints[controlPointsNum - 2].b;
+	lastG += 20;
+	if (lastG > 255) {
+		lastG = 0;
+		lastB += 20;
+	}
+	controlPoints[controlPointsNum - 1] = newp;
+	controlPoints[controlPointsNum - 1].setColourID(lastR, lastG, lastB);
+
+	// Set a flag to recompute the frames
+	hasChanged = true;
+	// Recalculate node vector
+	createNodeVector();
 }
 
 void BSpline::printArray(float* a, int size){

@@ -34,22 +34,27 @@ public:
 	BSpline(Point* points, int num);
 	virtual ~BSpline();
 
-	void setControlPoints(Point* points, int num);
-	int getPointSelected();
+	void init();
 
 	void printArray(float* a, int size);
 
+	void assignColourId();
 	void createNodeVector();
 	Point deBoor(int r, int i, float u);
-	void drawSpline();
 
+	void drawSpline();
 	void drawReferenceSystem(int w, int h);
+
 	void selectPoint(int x, int y);
 	void deselectPoint();
-	void assignColourId();
+
+	void moveSelectedPoint(float f, char c);
+	void addPoint(float x, float y, float z);
 
 	void computeFrames();
 	Point nextFrame();
+
+	void recalculate();
 };
 
 #endif /* BSPLINE_H_ */

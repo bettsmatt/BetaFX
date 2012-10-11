@@ -15,7 +15,6 @@
 #include "Camera.h"
 #include "BSpline.h"
 #include "Point.h"
-#include "Shape.h"
 
 #define NUM_KNOTS 8
 #define NUM_POINTS 4
@@ -32,7 +31,6 @@ void G308_keyboardListener(unsigned char, int, int);
 void G308_Reshape(int w, int h);
 void G308_display();
 void G308_init();
-void G308_SetCamera();
 void G308_SetLight();
 
 void mouse(int button, int state, int x, int y);
@@ -43,6 +41,7 @@ void tick();
 
 float camAngle;
 float camHeight;
+int animate = 0;
 
 /*
  * Particle Emitter
@@ -52,8 +51,6 @@ ParticleEmitter* particeEmitter;
 G308_Geometry** geometry = NULL;
 Camera* camera = NULL;
 BSpline* bspline = NULL;
-Shape* shape = NULL;
-Point points[5] = { Point(15,10,0), Point(5,10,2), Point(-5,0,0), Point(-10,5,-2), Point(-15,5,-2)};
 
 int key_held = 0;
 int numGeo;
@@ -93,10 +90,8 @@ int main(int argc, char** argv) {
 	camAngle = 0;
 	camHeight = 0;
 
-	shape = new Shape();
-	bspline = new BSpline(points, 5);
-	camera = new Camera();
-	camera->SetInitialCameraPosition((double) g_nWinWidth, (double) g_nWinHeight);
+	bspline = new BSpline();
+	bspline->init();
 
 	G308_init();
 	glutIdleFunc(tick);
@@ -143,30 +138,32 @@ void tick (){
 	 */
 
 
-	glMatrixMode(GL_PROJECTION);
-	glLoadIdentity();
-	gluPerspective(G308_FOVY, (double) g_nWinWidth / (double) g_nWinHeight, G308_ZNEAR_3D, G308_ZFAR_3D);
-	glMatrixMode(GL_MODELVIEW);
-	glLoadIdentity();
-
-	float x = sin(camAngle) * 50.0f;
-	float z = cos(camAngle) * 50.0f;
-
-	gluLookAt(
-			x,camHeight,z,
-			0,0,0,
-			0,1,0
-	);
+//	glMatrixMode(GL_PROJECTION);
+//	glLoadIdentity();
+//	gluPerspective(G308_FOVY, (double) g_nWinWidth / (double) g_nWinHeight, G308_ZNEAR_3D, G308_ZFAR_3D);
+//	glMatrixMode(GL_MODELVIEW);
+//	glLoadIdentity();
+//
+//	float x = sin(camAngle) * 50.0f;
+//	float z = cos(camAngle) * 50.0f;
+//
+//	gluLookAt(
+//			x,camHeight,z,
+//			0,0,0,
+//			0,1,0
+//	);
 
 	//camAngle+= 0.005f;
-	G308_display();
+	//G308_display();
+	glutPostRedisplay();
 }
 
 
 // Init Light and Camera
 void G308_init() {
+	camera = new Camera();
+	camera->SetInitialCameraPosition((double) g_nWinWidth, (double) g_nWinHeight);
 	G308_SetLight();
-//	G308_SetCamera();
 }
 
 // Display call back
@@ -196,8 +193,17 @@ void G308_display() {
 	 * Draw stuff here!
 	 */
 
+	if (bspline->hasChanged) {
+		bspline->hasChanged = false;
+		bspline->recalculate();
+	}
+	if(animate == 1){
+		camera->moveTo(bspline->nextFrame(), (double)g_nWinWidth, (double)g_nWinHeight);
+	}
+
 	// Draw the spline with the control points
 	bspline->drawSpline();
+
 
 	/*
 	 * Draw the particle emmiter and it's particles
@@ -226,13 +232,13 @@ void mouseMotion (int x, int y){
 
 		// Changing position of selected control point.
 		if(buttons[0] && key_held == MOVE_ALONG_X){
-			points[bspline->getPointSelected()].x += (float) 0.05f * diffx;
+			bspline->moveSelectedPoint((float) 0.05f * diffx, 'x');
 		}
 		else if(buttons[0] && key_held == MOVE_ALONG_Y){
-			points[bspline->getPointSelected()].y += (float) 0.05f * diffy;
+			bspline->moveSelectedPoint((float) 0.05f * diffx, 'y');
 		}
 		else if(buttons[0] && key_held == MOVE_ALONG_Z){
-			points[bspline->getPointSelected()].z += (float) 0.05f * diffy;
+			bspline->moveSelectedPoint((float) 0.05f * diffx, 'z');
 		}
 		// Change the view point of the scene.
 		else if (buttons[2]) {
@@ -331,21 +337,22 @@ void G308_keyboardListener(unsigned char key, int x, int y) {
 			particeEmitter->emit();
 
 
-	if(key == '4')
-		camAngle += 0.05f;
-
-	if(key == '6')
-		camAngle -= 0.05f;
-
-	if(key == '8')
-		camHeight += 1;
-
-	if(key == '2')
-		camHeight -= 1;
+//	if(key == '4')
+//		camAngle += 0.05f;
+//
+//	if(key == '6')
+//		camAngle -= 0.05f;
+//
+//	if(key == '8')
+//		camHeight += 1;
+//
+//	if(key == '2')
+//		camHeight -= 1;
 
 	// b,n,m decide which coordinate of the control point to change.
 	key_held = 0;
 	if (key == 'b') {
+		animate = animate == 1? 0 : 1;
 		key_held = MOVE_ALONG_X;
 	}
 	else if (key == 'n') {
@@ -353,6 +360,16 @@ void G308_keyboardListener(unsigned char key, int x, int y) {
 	}
 	else if (key == 'm') {
 		key_held = MOVE_ALONG_Z;
+	}
+
+	if(key == 'p'){
+		// Prompt for coordinates for the new point
+		float x,y,z;
+		printf("\nAdd point: Enter coordinates x y z: ");
+		if(scanf("%f %f %f", &x, &y, &z) == 3){
+			bspline->addPoint(x, y, z);
+			glutPostRedisplay();
+		}
 	}
 }
 
@@ -371,24 +388,6 @@ void G308_Reshape(int w, int h) {
 	glViewport(0, 0, g_nWinWidth, g_nWinHeight);
 }
 
-/*
- * Set Camera Position
- */
-void G308_SetCamera() {
-
-	glMatrixMode(GL_PROJECTION);
-	glLoadIdentity();
-	gluPerspective(G308_FOVY, (double) g_nWinWidth / (double) g_nWinHeight, G308_ZNEAR_3D, G308_ZFAR_3D);
-	glMatrixMode(GL_MODELVIEW);
-	glLoadIdentity();
-
-	gluLookAt(
-			30, 30, 30,
-			0, 0, 0,
-			0, 1, 0
-	);
-
-}
 
 // Set View Position
 void G308_SetLight() {
