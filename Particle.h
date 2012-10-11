@@ -24,8 +24,8 @@ class Particle
 {
 private:
 
-	float* position; // x, y, z
-	float* velocity; // x, y, z
+
+
 	float* acceletation; // x, y, z
 	float mass;
 
@@ -36,7 +36,8 @@ private:
 
 
 public:
-
+	float* position; // x, y, z
+	float* velocity; // x, y, z
 	Particle(float*); // Initial velocity
 	~Particle(void);
 

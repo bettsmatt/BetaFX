@@ -13,9 +13,12 @@ Collision::Collision() {}
 
 Collision::~Collision() {}
 
-bool Collision::checkIfCollided(Ball* b1, Ball* b2){
-	if(calculateVectorDistance(b1->position, b2->position) < 2) return true;
-	return false;
+bool Collision::checkIfCollidedBalls(Ball* b1, Ball* b2){
+	return (calculateVectorDistance(b1->position, b2->position) < 2);
+}
+
+bool Collision::checkIfCollidedBallParticle(Ball* b, Particle* p){
+	return (calculateVectorDistance(b->position, p->position) < 1.1);
 }
 
 float Collision::calculateVectorDistance(float *v1, float* v2)
@@ -30,18 +33,13 @@ float Collision::calculateVectorDistance(float *v1, float* v2)
 
 void Collision::collision3D(double cor, double mass1, double mass2, double radius1, double radius2,
 		float* pos1, float* pos2, float* vel1, float* vel2, int error){
-	printf("Ball1 pos1[1]: %f    ", pos1[0]);
+	printf("Ball position is before: %f        ", pos1[0]);
 	// Initialize
 	error = 0;
-	float pi = acos(-1.0E0);
 	float totalRadius = radius1 + radius2;
 	float totalMass = mass2 / mass1;
 	float distance[3] =  {pos2[0] - pos1[0], pos2[1] - pos1[1], pos2[2] - pos1[2]};
 	float velocity[3] = {vel2[0] - vel1[0], vel2[1] - vel1[1], vel2[2] - vel1[2]};
-
-	float vx_cm = (mass1 * vel1[0] + mass2 * vel2[0]) / (mass1 + mass2) ;
-	float vy_cm = (mass1 * vel1[1] + mass2 * vel2[1]) / (mass1 + mass2) ;
-	float vz_cm = (mass1 * vel1[2] + mass2 * vel2[2]) / (mass1 + mass2) ;
 
 	// Calculate relative distance and Velocity
 	float relativeDistance = sqrt(distance[0] * distance[0] + distance[1] * distance[1] + distance[2] * distance[2]);
@@ -54,24 +52,28 @@ void Collision::collision3D(double cor, double mass1, double mass2, double radiu
 
 	// Find the polar coordinates of the location of ball 2
 	float phi2 = 0;
-	if (pos2[0] == 0 && pos2[1] == 0) phi2 = 0;
-	else phi2 = atan2(pos2[1], pos2[0]);
+	if (distance[0] != 0 || distance[1] != 0) phi2 = atan2(distance[1], distance[0]);
 
-	float st = sin(acos(pos2[2]/relativeDistance));
-	float ct = cos(acos(pos2[2]/relativeDistance));
+
+	printf("pos2[2]: %f  relativeDistance: %f \n", distance[2], relativeDistance);
+	float st = sin(acos(distance[2] / relativeDistance));
+	float ct = cos(acos(distance[2] / relativeDistance));
 	float sp = sin(phi2);
 	float cp = cos(phi2);
 
+	printf("st: %f\n", st);
+	printf("ct: %f\n", ct);
+
 	// Express the velocity vector of ball 1 in a rotated coordinate
 	// System where ball 2 lies on the z-axis
-	float vx1r=ct*cp*vel1[0]+ct*sp*vel1[1]-st*vel1[2];
-	float vy1r=cp*vel1[1]-sp*vel1[0];
-	float vz1r=st*cp*vel1[0]+st*sp*vel1[1]+ct*vel1[2];
-	float fvz1r = vz1r/relativeVelocity ;
-	if (fvz1r>1) {fvz1r=1;}   // fix for possible rounding errors
-	else if (fvz1r<-1) {fvz1r=-1;}
+	float vx1r = ct * cp * vel1[0] + ct * sp * vel1[1] - st * vel1[2];
+	float vy1r = cp * vel1[1] - sp * vel1[0];
+	float vz1r = st * cp * vel1[0] + st * sp * vel1[1] + ct * vel1[2];
+	float fvz1r = vz1r / relativeVelocity ;
+	if (fvz1r>1) {fvz1r = 1;}   // fix for possible rounding errors
+	else if (fvz1r<-1) {fvz1r =- 1;}
 
-	float thetav=acos(fvz1r);
+	float thetav = acos(fvz1r);
 
 
 	// Calculate the normalized impact parameter
@@ -82,19 +84,14 @@ void Collision::collision3D(double cor, double mass1, double mass2, double radiu
 	float impactAngle2 = atan2(vy1r, vx1r);
 	if (vx1r == 0 && vy1r == 0) impactAngle2 = 0;
 
-	// Calculate time to collision
-	float t= (relativeDistance * cos(thetav) - totalRadius * sqrt(1 - dr * dr)) / relativeVelocity;
-
 	// Update velocities
-	float a = tan(thetav+impactAngle1 );
-	float dvz2=2*(vz1r+a*(cos(impactAngle2)*vx1r+sin(impactAngle2)*vy1r))/((1+a*a)*(1+totalMass));
-	float vz2r=dvz2;
-	float vx2r=a*cos(impactAngle2)*dvz2;
-	float vy2r=a*sin(impactAngle2)*dvz2;
-	vz1r=vz1r-totalMass*vz2r;
-	vx1r=vx1r-totalMass*vx2r;
-	vy1r=vy1r-totalMass*vy2r;
-
+	float a = tan(thetav + impactAngle1);
+	float vz2r = 2 * (vz1r + a * (cos(impactAngle2)*vx1r+sin(impactAngle2)*vy1r))/((1+a*a)*(1+totalMass));
+	float vx2r = a * cos(impactAngle2)*vz2r;
+	float vy2r = a * sin(impactAngle2)*vz2r;
+	vz1r = (vz1r - totalMass * vz2r);
+	vx1r = vx1r - totalMass * vx2r;
+	vy1r = vy1r - totalMass * vy2r;
 
 	// Rotate the velocity vectors back and add the initial velocity vector of ball 2 to retrieve the original coordinate system
 	vel1[0]= ct * cp * vx1r - sp * vy1r + st * cp * vz1r + vel2[0];
@@ -104,20 +101,11 @@ void Collision::collision3D(double cor, double mass1, double mass2, double radiu
 	vel2[1]= ct * sp * vx2r + cp * vy2r + st * sp * vz2r + vel2[1];
 	vel2[2]= ct * vz2r - st * vx2r +vel2[2];
 
-
-	// Velocity correction for inelastic collisions
-	vel1[0] = (vel1[0] - vx_cm) * cor + vx_cm;
-	vel1[1] = (vel1[1] - vy_cm) * cor + vy_cm;
-	vel1[2] = (vel1[2] - vz_cm) * cor + vz_cm;
-	vel2[0] = (vel2[0] - vx_cm) * cor + vx_cm;
-	vel2[1] = (vel2[1] - vy_cm) * cor + vy_cm;
-	vel2[2] = (vel2[2] - vz_cm) * cor + vz_cm;
-
 	for(int i = 0; i < 3; i++){
-			pos1[i] += vel1[i];
-			pos2[i] += vel2[i];
+		pos1[i] += vel1[i];
+		pos2[i] += vel2[i];
 	}
 
-	printf("Ball1 pos1[1]: %f\n", pos1[0]);
+	printf("Ball position is after: %f\n", pos1[0]);
 	return;
 }

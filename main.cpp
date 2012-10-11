@@ -1,20 +1,3 @@
-//---------------------------------------------------------------------------
-//
-// This software is provided 'as-is' for assignment of COMP308
-// in ECS, Victoria University of Wellington,
-// without any express or implied warranty.
-// In no event will the authors be held liable for any
-// damages arising from the use of this software.
-//
-// The contents of this file may not be copied or duplicated in any form
-// without the prior permission of its owner.
-//
-// Copyright (c) 2012 by Taehyun Rhee
-//
-// Edited by Roma Klapaukh, Daniel Atkins, and Taehyun Rhee
-//
-//---------------------------------------------------------------------------
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <iostream>
@@ -43,7 +26,6 @@ GLuint g_mainWnd;
 GLuint g_nWinWidth = G308_WIN_WIDTH;
 GLuint g_nWinHeight = G308_WIN_HEIGHT;
 
-float zoom, rotx, roty, tx, ty = 0.0f;
 int lastx, lasty = 0;
 
 unsigned char buttons[3] = { 0 };
@@ -170,14 +152,15 @@ void tick (){
 	}
 	for(int i = 0; i < maxBalls; i++){
 		for(int j = 0; j < maxBalls; j++){
-			if(i != j && c->checkIfCollided(balls[i], balls[j])){
+			if(i != j && c->checkIfCollidedBalls(balls[i], balls[j])){
 				int error = 0;
-				c->collision3D(1, 10, 10, 2, 2, balls[i]->position, balls[j]->position, balls[i]->velocity, balls[j]->velocity, error);
+				c->collision3D(0.5, 100, 10, 2, 2, balls[i]->position, balls[j]->position, balls[i]->velocity, balls[j]->velocity, error);
 			}
 		}
 	}
-
-
+	for(int i = 0; i < maxBalls; i++){
+		particeEmitter->collideWithBalls(balls[i], c);
+	}
 
 
 
@@ -234,7 +217,7 @@ void G308_display() {
 
 	glPushMatrix();
 
-	camera->RotateCamera(zoom, tx, ty, rotx, roty);
+	camera->RotateCamera();
 
 	/*
 	 * Draw stuff here!
@@ -269,7 +252,6 @@ void mouseMotion (int x, int y){
 	int diffy = y - lasty;
 	lastx = x;
 	lasty = y;
-
 	// Changing position of selected control point.
 	if(buttons[0] && key_held == MOVE_ALONG_X){
 		points[bspline->getPointSelected()].x += (float) 0.05f * diffx;
@@ -282,13 +264,13 @@ void mouseMotion (int x, int y){
 	}
 	// Change the view point of the scene.
 	else if (buttons[2]) {
-		zoom -= (float) 0.05f * diffy;
+		camera->zoom -= (float) 0.05f * diffy;
 	} else if (buttons[0]) {
-		rotx += (float) 0.5f * diffy;
-		roty += (float) 0.5f * diffx;
+		camera->rotx += (float) 0.5f * diffy;
+		camera->roty += (float) 0.5f * diffx;
 	} else if (buttons[1]) {
-		tx += (float) 0.05f * diffx;
-		ty -= (float) 0.05f * diffy;
+		camera->tx += (float) 0.05f * diffx;
+		camera->ty -= (float) 0.05f * diffy;
 	}
 	glutPostRedisplay();
 }
@@ -464,13 +446,13 @@ void createBalls(){
 	for(int i = 0; i < maxBalls; i++){
 		if(i == 0){
 			float v[3] = {-0.01f, -0.00f, 0.0f};
-			float p[3] = {3.0f, 0.0f, 0.0f};
+			float p[3] = {3.0f, 0.0f, 1.0f};
 
 			balls[i] = new Ball(p, v);
 		}
 		if(i == 1){
 			float v[3] = {0.01f, 0.01f, 0.0f};
-			float p[3] = {-3.0f, -3.0f, 0.0f};
+			float p[3] = {-6.0f, -4.0f, 0.0f};
 
 			balls[i] = new Ball(p, v);
 		}
