@@ -72,7 +72,6 @@ void Particle::applyForce(float* force){
 }
 
 void Particle::tick (){
-
 	/*
 	 * Apply acceleration to velocity,
 	 * Update the position by the new velocity.
@@ -145,6 +144,7 @@ void Particle::renderParticle() {
 		glTexCoord2f(0,0);
 		glVertex3f(-1 * size,-1 * size, 0.0f);
 	glEnd();
+
 
 
 

@@ -11,6 +11,8 @@
 #include "quaternion.h"
 #include "G308_ImageLoader.h"
 #include "ParticleEmitter.h"
+#include "Collision.h"
+#include "Ball.h"
 
 #include "Camera.h"
 #include "BSpline.h"
@@ -38,22 +40,25 @@ void mouseMotion (int x, int y);
 void menu (int);
 
 void tick();
+void createBalls();
 
 float camAngle;
 float camHeight;
 int animate = 0;
+int maxBalls;
 
 /*
  * Particle Emitter
  */
 ParticleEmitter* particeEmitter;
-
+Collision* collision;
 G308_Geometry** geometry = NULL;
+Ball** balls = NULL;
+int numGeo, hitCount = 0;
 Camera* camera = NULL;
 BSpline* bspline = NULL;
 
 int key_held = 0;
-int numGeo;
 
 void loadTexture(char*, GLuint);
 
@@ -77,7 +82,7 @@ int main(int argc, char** argv) {
 	glutDisplayFunc(G308_display);
 	glutReshapeFunc(G308_Reshape);
 
-
+	maxBalls = 2;
 	particeEmitter = new ParticleEmitter();
 	float* v = new float[3];
 	v[0] = 0;
@@ -85,6 +90,9 @@ int main(int argc, char** argv) {
 	v[2] = 0;
 	particeEmitter->setVector(v);
 
+	collision = new Collision();
+
+	createBalls();
 	loadTexture("sprite2.png", 1);
 
 	camAngle = 0;
@@ -128,10 +136,28 @@ void loadTexture (char* filename, GLuint id){
  */
 void tick (){
 
+	Collision* c = new Collision;
 	/*
 	 * Simulate a frame in the particle emitter
 	 */
 	particeEmitter->tick();
+	particeEmitter->emit();
+	for(int i = 0; i < maxBalls; i ++){
+		balls[i]->tick();
+	}
+	for(int i = 0; i < maxBalls; i++){
+		for(int j = 0; j < maxBalls; j++){
+			if(i != j && c->checkIfCollidedBalls(balls[i], balls[j])){
+				int error = 0;
+				c->collision3D(0.5, 100, 10, 2, 2, balls[i]->position, balls[j]->position, balls[i]->velocity, balls[j]->velocity, error);
+			}
+		}
+	}
+	for(int i = 0; i < maxBalls; i++){
+		particeEmitter->collideWithBalls(balls[i], c);
+	}
+
+
 
 	/*
 	 * Rotate the camera for effect
@@ -156,6 +182,7 @@ void tick (){
 	//camAngle+= 0.005f;
 	//G308_display();
 	glutPostRedisplay();
+	free(c);
 }
 
 
@@ -210,8 +237,10 @@ void G308_display() {
 	 */
 	particeEmitter->renderParticles();
 
-	glPopMatrix();
+	for(int i = 0; i < maxBalls; i ++) balls[i]->renderBall();
 
+
+	glPopMatrix();
 
 	glDisable(GL_DEPTH_TEST);
 	glDisable(GL_LIGHTING);
@@ -262,27 +291,27 @@ void mouseMotion (int x, int y){
  */
 void mouse (int b, int s, int x, int y){
 	lastx = x;
-		lasty = y;
+	lasty = y;
 
-		bspline->deselectPoint();
+	bspline->deselectPoint();
 
-		// This one is for selecting a control point and changing its position.
-		if(b == GLUT_LEFT_BUTTON && s == GLUT_DOWN
-				&& (key_held == MOVE_ALONG_X || key_held == MOVE_ALONG_Y || key_held == MOVE_ALONG_Z)){
-			bspline->selectPoint(x, y);
-			buttons[0] = ((GLUT_DOWN == s) ? 1 : 0);
-		}
-		else if(b == GLUT_LEFT_BUTTON){
-			buttons[0] = ((GLUT_DOWN == s) ? 1 : 0);
-		}
-		else if(b == GLUT_MIDDLE_BUTTON){
-			buttons[1] = ((GLUT_DOWN == s) ? 1 : 0);
-		}
-		else if(b == GLUT_RIGHT_BUTTON){
-			buttons[2] = ((GLUT_DOWN == s) ? 1 : 0);
-		}
+	// This one is for selecting a control point and changing its position.
+	if(b == GLUT_LEFT_BUTTON && s == GLUT_DOWN
+			&& (key_held == MOVE_ALONG_X || key_held == MOVE_ALONG_Y || key_held == MOVE_ALONG_Z)){
+		bspline->selectPoint(x, y);
+		buttons[0] = ((GLUT_DOWN == s) ? 1 : 0);
+	}
+	else if(b == GLUT_LEFT_BUTTON){
+		buttons[0] = ((GLUT_DOWN == s) ? 1 : 0);
+	}
+	else if(b == GLUT_MIDDLE_BUTTON){
+		buttons[1] = ((GLUT_DOWN == s) ? 1 : 0);
+	}
+	else if(b == GLUT_RIGHT_BUTTON){
+		buttons[2] = ((GLUT_DOWN == s) ? 1 : 0);
+	}
 
-		glutPostRedisplay();
+	glutPostRedisplay();
 }
 
 /*
@@ -409,6 +438,25 @@ void G308_SetLight() {
 	glLightfv(GL_LIGHT0, GL_DIFFUSE, diffusePoint);
 	glLightfv(GL_LIGHT0, GL_SPECULAR, specularPoint);
 
+
+}
+
+void createBalls(){
+	balls = new Ball*[maxBalls];
+	for(int i = 0; i < maxBalls; i++){
+		if(i == 0){
+			float v[3] = {-0.01f, -0.00f, 0.0f};
+			float p[3] = {3.0f, 0.0f, 1.0f};
+
+			balls[i] = new Ball(p, v);
+		}
+		if(i == 1){
+			float v[3] = {0.01f, 0.01f, 0.0f};
+			float p[3] = {-6.0f, -4.0f, 0.0f};
+
+			balls[i] = new Ball(p, v);
+		}
+	}
 
 }
 

@@ -250,9 +250,14 @@ void ParticleEmitter::renderParticles() {
 
 
 	glPopMatrix();
-
-
-
-
-
 }
+
+void ParticleEmitter::collideWithBalls(Ball* ball, Collision* c){
+	for(int i = 0; i < MAX_PARTICLES && i < created ; i ++){
+		if(c->checkIfCollidedBallParticle(ball, particles[i])){
+			int error = 0;
+			c->collision3D(1, 100, 0.001, 1, 0.1, ball->position, particles[i]->position, ball->velocity, particles[i]->velocity, error);
+		}
+	}
+}
+
