@@ -260,4 +260,3 @@ void ParticleEmitter::collideWithBalls(Ball* ball, Collision* c){
 		}
 	}
 }
-
