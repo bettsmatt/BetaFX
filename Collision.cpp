@@ -33,7 +33,7 @@ float Collision::calculateVectorDistance(float *v1, float* v2)
 
 void Collision::collision3D(double cor, double mass1, double mass2, double radius1, double radius2,
 		float* pos1, float* pos2, float* vel1, float* vel2, int error){
-	printf("Ball position is before: %f        ", pos1[0]);
+//	printf("Ball position is before: %f        ", pos1[0]);
 	// Initialize
 	error = 0;
 	float totalRadius = radius1 + radius2;
@@ -55,14 +55,14 @@ void Collision::collision3D(double cor, double mass1, double mass2, double radiu
 	if (distance[0] != 0 || distance[1] != 0) phi2 = atan2(distance[1], distance[0]);
 
 
-	printf("pos2[2]: %f  relativeDistance: %f \n", distance[2], relativeDistance);
+//	printf("pos2[2]: %f  relativeDistance: %f \n", distance[2], relativeDistance);
 	float st = sin(acos(distance[2] / relativeDistance));
 	float ct = cos(acos(distance[2] / relativeDistance));
 	float sp = sin(phi2);
 	float cp = cos(phi2);
 
-	printf("st: %f\n", st);
-	printf("ct: %f\n", ct);
+//	printf("st: %f\n", st);
+//	printf("ct: %f\n", ct);
 
 	// Express the velocity vector of ball 1 in a rotated coordinate
 	// System where ball 2 lies on the z-axis
@@ -106,6 +106,6 @@ void Collision::collision3D(double cor, double mass1, double mass2, double radiu
 		pos2[i] += vel2[i];
 	}
 
-	printf("Ball position is after: %f\n", pos1[0]);
+//	printf("Ball position is after: %f\n", pos1[0]);
 	return;
 }

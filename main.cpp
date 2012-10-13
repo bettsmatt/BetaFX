@@ -16,7 +16,8 @@
 
 #include "Camera.h"
 #include "BSpline.h"
-#include "Point.h"
+#include "ControlPoint.h"
+#include "Shape.h"
 
 #define NUM_KNOTS 8
 #define NUM_POINTS 4
@@ -57,6 +58,7 @@ Ball** balls = NULL;
 int numGeo, hitCount = 0;
 Camera* camera = NULL;
 BSpline* bspline = NULL;
+Shape* shape = NULL;
 
 int key_held = 0;
 
@@ -100,6 +102,7 @@ int main(int argc, char** argv) {
 
 	bspline = new BSpline();
 	bspline->init();
+	shape = new Shape();
 
 	G308_init();
 	glutIdleFunc(tick);
@@ -157,30 +160,11 @@ void tick (){
 		particeEmitter->collideWithBalls(balls[i], c);
 	}
 
+	if(animate == 1){
+			//camera->lookAt(bspline->nextFrame(), (double)g_nWinWidth, (double)g_nWinHeight);
+			shape->move(bspline->nextFrame());
+	}
 
-
-	/*
-	 * Rotate the camera for effect
-	 */
-
-
-//	glMatrixMode(GL_PROJECTION);
-//	glLoadIdentity();
-//	gluPerspective(G308_FOVY, (double) g_nWinWidth / (double) g_nWinHeight, G308_ZNEAR_3D, G308_ZFAR_3D);
-//	glMatrixMode(GL_MODELVIEW);
-//	glLoadIdentity();
-//
-//	float x = sin(camAngle) * 50.0f;
-//	float z = cos(camAngle) * 50.0f;
-//
-//	gluLookAt(
-//			x,camHeight,z,
-//			0,0,0,
-//			0,1,0
-//	);
-
-	//camAngle+= 0.005f;
-	//G308_display();
 	glutPostRedisplay();
 	free(c);
 }
@@ -189,7 +173,7 @@ void tick (){
 // Init Light and Camera
 void G308_init() {
 	camera = new Camera();
-	camera->SetInitialCameraPosition((double) g_nWinWidth, (double) g_nWinHeight);
+	camera->setInitialCameraPosition((double) g_nWinWidth, (double) g_nWinHeight);
 	G308_SetLight();
 }
 
@@ -214,7 +198,7 @@ void G308_display() {
 
 	glPushMatrix();
 
-	camera->RotateCamera();
+	camera->rotateCamera();
 
 	/*
 	 * Draw stuff here!
@@ -224,13 +208,13 @@ void G308_display() {
 		bspline->hasChanged = false;
 		bspline->recalculate();
 	}
-	if(animate == 1){
-		camera->moveTo(bspline->nextFrame(), (double)g_nWinWidth, (double)g_nWinHeight);
-	}
+
 
 	// Draw the spline with the control points
-	bspline->drawSpline();
+	bspline->draw();
 
+	// Draw the shape that goes along the spline
+	shape->draw();
 
 	/*
 	 * Draw the particle emmiter and it's particles
@@ -365,23 +349,9 @@ void G308_keyboardListener(unsigned char key, int x, int y) {
 		for(int i = 0 ; i < 50 ; i ++)
 			particeEmitter->emit();
 
-
-//	if(key == '4')
-//		camAngle += 0.05f;
-//
-//	if(key == '6')
-//		camAngle -= 0.05f;
-//
-//	if(key == '8')
-//		camHeight += 1;
-//
-//	if(key == '2')
-//		camHeight -= 1;
-
 	// b,n,m decide which coordinate of the control point to change.
 	key_held = 0;
 	if (key == 'b') {
-		animate = animate == 1? 0 : 1;
 		key_held = MOVE_ALONG_X;
 	}
 	else if (key == 'n') {
@@ -390,8 +360,10 @@ void G308_keyboardListener(unsigned char key, int x, int y) {
 	else if (key == 'm') {
 		key_held = MOVE_ALONG_Z;
 	}
-
-	if(key == 'p'){
+	else if(key == 'a'){
+		animate = animate == 1? 0 : 1;
+	}
+	else if(key == 'p'){
 		// Prompt for coordinates for the new point
 		float x,y,z;
 		printf("\nAdd point: Enter coordinates x y z: ");
@@ -399,6 +371,24 @@ void G308_keyboardListener(unsigned char key, int x, int y) {
 			bspline->addPoint(x, y, z);
 			glutPostRedisplay();
 		}
+	}
+	// Toggle the display of times for each control point.
+	else if(key == 's'){
+		bspline->infoDisplay = !bspline->infoDisplay;
+		glutPostRedisplay();
+	}
+	// Change the times an object passes through each control point.
+	else if(key == 'x'){
+		// Prompt for new time values
+		bspline->promptForNewTimes();
+		bspline->readNewTimes();
+		glutPostRedisplay();
+	}
+	else if(key == 'z'){
+		// Prompt for new time values
+		bspline->promptForNewInterval();
+		bspline->readNewInterval();
+		glutPostRedisplay();
 	}
 }
 

@@ -8,42 +8,57 @@
 #ifndef BSPLINE_H_
 #define BSPLINE_H_
 
-#include "Point.h"
+#include "ControlPoint.h"
 #include <GL/glut.h>
+
+
+struct Frame {
+	ControlPoint ctrlPoint;
+	ControlPoint nextCtrlPoint;
+	int isLast;
+};
 
 class BSpline {
 
 private:
 	int n; // Degree of the curve
 
-    Point* controlPoints; // The control points.
-    Point* frames;
+	ControlPoint* controlPoints; // The control points.
+    Frame* frames;
     int controlPointsNum;
-    int* nV; // Node vector
     int numSplinePieces;
     int pointSelected;
     int currentFrame;
+
+    float deltaTime;
+
+    float startTime;
+	float endTime;
+
+	int count;
+	float* times;
+	ControlPoint* positions;
 
     void drawCurve();
    	void drawControlPoints(GLenum mode);
 
 public:
     bool hasChanged;
+    bool infoDisplay;
 
 	BSpline();
-	BSpline(Point* points, int num);
+	BSpline(ControlPoint* points, int num);
 	virtual ~BSpline();
+
+	int getControlPointsNum();
 
 	void init();
 
 	void printArray(float* a, int size);
 
 	void assignColourId();
-	void createNodeVector();
-	Point deBoor(int r, int i, float u);
 
-	void drawSpline();
-	void drawReferenceSystem(int w, int h);
+	void draw();
 
 	void selectPoint(int x, int y);
 	void deselectPoint();
@@ -52,9 +67,17 @@ public:
 	void addPoint(float x, float y, float z);
 
 	void computeFrames();
-	Point nextFrame();
+	void computeKnots();
+	void computeTimes();
+	Frame nextFrame();
 
 	void recalculate();
+
+	ControlPoint evaluate(float t);
+	void promptForNewTimes();
+	void readNewTimes();
+	void promptForNewInterval();
+	void readNewInterval();
 };
 
 #endif /* BSPLINE_H_ */

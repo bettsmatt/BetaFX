@@ -314,7 +314,7 @@ void G308_Geometry::CreateGLPolyGeometry() {
 
 void G308_Geometry::CreateGLWireGeometry() {
 	if (m_glGeomListWire != 0)
-		glDeleteLists(m_glGeomListWire, 1);http://gm/
+		glDeleteLists(m_glGeomListWire, 1);
 
 		// Assign a display list; return 0 if err
 		m_glGeomListWire = glGenLists(1);

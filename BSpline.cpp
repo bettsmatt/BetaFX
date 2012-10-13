@@ -9,41 +9,55 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <GL/glut.h>
-#include "Point.h"
+#include "ControlPoint.h"
 
 #define MAX_POINTS 20
 
 BSpline::BSpline() {
 	controlPointsNum = 5;
-	controlPoints = new Point[MAX_POINTS];
-	controlPoints[0] = Point(15,10,0);
-	controlPoints[1] = Point(5,10,2);
-	controlPoints[2] = Point(-5,0,0);
-	controlPoints[3] = Point(-10,5,-2);
-	controlPoints[4] = Point(-15,5,-2);
+	controlPoints = new ControlPoint[MAX_POINTS];
+	controlPoints[0] = ControlPoint(15, 10, 0, 1.0f);
+	controlPoints[1] = ControlPoint(5, 10, 2, 2.0f);
+	controlPoints[2] = ControlPoint(-5, 0, 0, 3.0f);
+	controlPoints[3] = ControlPoint(-10, 5, -2, 2.0f);
+	controlPoints[4] = ControlPoint(-15, 5, -2, 1.0f);
 }
 
-BSpline::BSpline(Point* points, int num){
+BSpline::BSpline(ControlPoint* points, int num){
 	controlPoints = points;
 	controlPointsNum = num;
 
 }
 
 BSpline::~BSpline() {
-	if(nV != NULL) delete[] nV;
+	//if(nV != NULL) delete[] nV;
 	if(controlPoints != NULL) delete[] controlPoints;
+	if(positions != NULL) delete[] positions;
+	if(times != NULL) delete[] times;
+	if(frames != NULL) delete[] frames;
 }
 
 void BSpline::init(){
-	n = 2; // Degree of the curve
+	n = 3; // Degree of the curve
 	pointSelected = -1;
-	nV = NULL;
 	frames = NULL;
+	deltaTime = 0.01f;
 	numSplinePieces = 0;
 	currentFrame = 0;
-	hasChanged = true;
+	hasChanged = false;
+	infoDisplay = false;
+	positions = NULL;
+	times = NULL;
+	startTime = 0.0f;
+	endTime = 1.0f;
 	assignColourId();
-	createNodeVector();
+	computeKnots();
+	computeTimes();
+	computeFrames();
+}
+
+int BSpline::getControlPointsNum(){
+	return controlPointsNum;
 }
 
 // This part was done with the help from http://content.gpwiki.org/index.php/OpenGL_Selection_Using_Unique_Color_IDs
@@ -65,47 +79,10 @@ void BSpline::assignColourId() {
 	}
 }
 
-void BSpline::createNodeVector(){
-	if (nV != NULL)
-		delete[] nV;
-
-	nV = new int[controlPointsNum + 5];
-	int knoten = 0;
-	for (int i = 0; i < (n + controlPointsNum + 1); i++){ // n+m+1 = nr of nodes
-		if (i > n){
-			if (i <= controlPointsNum){
-				nV[i] = ++knoten;
-			}
-			else{
-				nV[i] = knoten;
-			}
-		}
-		else {
-			nV[i] = knoten;
-		}
-	}
-}
-
-// Recursive deBoor algorithm.
-Point BSpline::deBoor(int r, int i, float u) {
-	if (r == 0) {
-		return controlPoints[i];
-	} else {
-		float pre = (u - nV[i + r]) / (nV[i + n + 1] - nV[i + r]); // Precalculation
-
-		Point p1 = deBoor(r - 1, i, u);
-		p1.multiplyScalar(1-pre);
-
-		Point p2 = deBoor(r - 1, i + 1, u);
-		p2.multiplyScalar(pre);
-
-		p1.addPoint(p2);
-
-		return p1;
-	}
-}
-
-void BSpline::drawSpline(){
+//****************************************************************************
+// DRAWING
+//****************************************************************************
+void BSpline::draw(){
 	drawControlPoints(GL_RENDER);
 	drawCurve();
 }
@@ -113,21 +90,13 @@ void BSpline::drawSpline(){
 void BSpline::drawCurve(){
 	if(controlPointsNum == 0) return;
 
-	numSplinePieces = 0;
 	glColor3f(1, 1, 0);
 	glBegin(GL_LINE_STRIP);
-
-	Point vertex = Point();
-
-	for(float i = 0.0f; i < nV[n + controlPointsNum]; i += 0.1f){
-		for(int j = 0; j < controlPointsNum; j++){
-            if(i >= j){
-                vertex = deBoor(n, j, i);
-            }
-        }
-		// specify the point
-		glVertex3f(vertex.x, vertex.y, vertex.z);
-		numSplinePieces++;
+	ControlPoint start = evaluate(0.0f);
+	ControlPoint end = ControlPoint();
+	for (float t = startTime; t < endTime; t += 0.01f) {
+		end = evaluate(t);
+		glVertex3f(end.x, end.y, end.z);
 	}
 	glEnd();
 }
@@ -139,10 +108,10 @@ void BSpline::drawControlPoints(GLenum mode) {
 		printf("Not enough memory to allocate space to draw\n");
 		exit(EXIT_FAILURE);
 	}
-
 	// draw the control points
 	for (int i = 0; i < controlPointsNum; i++) {
 		controlPoints[i].draw(pointSelected == i);
+		if(infoDisplay) controlPoints[i].showTime();
 	}
 
 	// draw the hull of the curve
@@ -156,69 +125,71 @@ void BSpline::drawControlPoints(GLenum mode) {
 
 }
 
-void BSpline::drawReferenceSystem(int winWidth, int winHeight) {
-	if (controlPointsNum == 0)
-		return;
-	GLUquadric* q = gluNewQuadric();
-	if (q == 0) {
-		printf("Not enough memory to allocate space to draw\n");
-		exit(EXIT_FAILURE);
+//****************************************************************************
+// CALCULATING SPLINE COMPONENTS
+//****************************************************************************
+void BSpline::recalculate(){
+	computeKnots();
+	computeTimes();
+	computeFrames();
+}
+
+void BSpline::computeKnots(){
+	if (positions != NULL)
+		delete[] positions;
+
+	positions = new ControlPoint[controlPointsNum + n + 1];
+	count = controlPointsNum + n + 1;
+
+	// Copy positions data (triplicate start and en points so that curve passes trough them.)
+	positions[0] = positions[1] = controlPoints[0];
+
+	for (int i = 0; i < controlPointsNum; ++i) {
+		positions[i + 2] = controlPoints[i];
 	}
 
-	glPushMatrix();
-	glTranslatef(-10, -10, 0);
+	positions[count - 1] = positions[count - 2] = controlPoints[controlPointsNum - 1];
+}
 
-		// Z-axis
-		glPushMatrix();
-			glColor3f(0, 0, 1);
-			gluCylinder(q, 0.2, 0.2, 1.5, 10, 10);
-			glTranslatef(0, 0, 1.5);
-			glutSolidCone(0.5, 0.5, 10, 10);
-		glPopMatrix();
+void BSpline::computeTimes(){
+	if (times != NULL)
+			delete[] times;
 
-		// Y-axis
-		glPushMatrix();
-			glColor3f(0, 1, 0);
-			glRotatef(-90, 1, 0, 0);
-			gluCylinder(q, 0.2, 0.2, 1.5, 10, 10);
-			glTranslatef(0, 0, 1.5);
-			glutSolidCone(0.5, 0.5, 10, 10);
-		glPopMatrix();
+	times = new float[controlPointsNum + 2];
+	// Setup times (subdivide interval to get arrival times at each knot location)
+	float dt = (endTime - startTime) / (float) (controlPointsNum + 1);
 
-		// X-axis
-		glPushMatrix();
-			glColor3f(1, 0, 0);
-			glRotatef(90, 0, 1, 0);
-			gluCylinder(q, 0.2, 0.2, 1.5, 10, 10);
-			glTranslatef(0, 0, 1.5);
-			glutSolidCone(0.5, 0.5, 10, 10);
-		glPopMatrix();
+	// Initially, make the speed constant along the spline
+	times[0] = startTime;
+	for (int i = 0; i < controlPointsNum; ++i) {
+		times[i + 1] = times[i] + dt;
+		controlPoints[i].time = times[i + 1];
+	}
 
-	glPopMatrix();
-
-	gluDeleteQuadric(q);
+	times[controlPointsNum + 1] = endTime;
 }
 
 void BSpline::computeFrames(){
 	if (frames != NULL)
 			delete[] frames;
 
-	currentFrame = 0;
-	frames = new Point[numSplinePieces];
-	Point point = Point();
-	int k = 0;
-	for(float i = 0.0f; i < nV[n + controlPointsNum]; i += 0.1f){
-		for(int j = 0; j < controlPointsNum; j++){
-	        if(i >= j){
-	        	point = deBoor(n, j, i);
-	        }
-	    }
-		frames[k++] = point;
+	numSplinePieces = 0;
+	for (float t = startTime; t < endTime; t += deltaTime) {
+		numSplinePieces++;
 	}
+	frames = new Frame[numSplinePieces];
+
+	int k = 0;
+	Frame* f = (Frame*)malloc(sizeof(Frame));
+	for (float t = startTime; t < endTime; t += deltaTime) {
+		f->ctrlPoint = evaluate(t);
+		frames[k++] = *f;
+	}
+	free(f);
 }
 
-Point BSpline::nextFrame(){
-	Point p = frames[currentFrame];
+Frame BSpline::nextFrame(){
+	Frame p = frames[currentFrame];
 	currentFrame++;
 	if(currentFrame >= numSplinePieces){
 		currentFrame = 0;
@@ -226,15 +197,53 @@ Point BSpline::nextFrame(){
 	return p;
 }
 
-void BSpline::recalculate(){
-	//createNodeVector();
-	numSplinePieces = 0;
-	for(float i = 0.0f; i < nV[n + controlPointsNum]; i += 0.1f){
-		numSplinePieces++;
+//****************************************************************************
+// USER INTERACTION THROUGH COMMAND LINE
+//****************************************************************************
+void BSpline::promptForNewTimes(){
+	printf("\nCurrent times are:\n");
+	for (int i = 0; i < controlPointsNum; i++) {
+		printf("%.2f ", controlPoints[i].time);
 	}
-	computeFrames();
+	printf("\nEnter new time values separated by space.\nValues should be between 0 and 1.\n ");
 }
 
+void BSpline::readNewTimes(){
+	float number = 0;
+	for (int i = 0; i < controlPointsNum; i++) {
+		scanf("%f", &number);
+		times[i+1] = number * endTime;
+		controlPoints[i].time = times[i + 1];
+	}
+	printf("\nTimes after change:\n");
+	for (int i = 0; i < controlPointsNum; i++) {
+		printf("%.2f ", controlPoints[i].time);
+	}
+	printf("\n");
+	hasChanged = true;
+}
+
+void BSpline::promptForNewInterval(){
+	printf("\nCurrent time interval from start of the spline to the end is %.2f\n", (endTime - startTime));
+	printf("\nEnter new time interval: \n ");
+}
+void BSpline::readNewInterval(){
+	float number = 0;
+	scanf("%f", &number);
+
+	for (int i = 0; i < controlPointsNum; i++) {
+		times[i+1] = times[i+1] * (number / endTime);
+		controlPoints[i].time = times[i + 1];
+	}
+	endTime = number;
+	times[controlPointsNum + 1] = endTime;
+	printf("\nTime interval after change is %.2f\n", endTime);
+	hasChanged = true;
+}
+
+//****************************************************************************
+// SELECTING AND MOVING CONTROL POINTS
+//****************************************************************************
 void BSpline::deselectPoint(){
 	pointSelected = -1;
 }
@@ -250,10 +259,9 @@ void BSpline::selectPoint(int x, int y){
 	unsigned char pixel[3];
 	glGetIntegerv(GL_VIEWPORT, viewport); // get color information from frame buffer
 
-	//printf("pixel %i %i %i\n", pixel[0], pixel[1], pixel[2]);
 	glReadPixels(x, viewport[3] - y, 1, 1, GL_RGB, GL_UNSIGNED_BYTE, pixel);
 	for (int i = 0; i < controlPointsNum; i++) {
-		if(controlPoints[i].r == pixel[0] && controlPoints[i].g == pixel[1] && controlPoints[i].b == pixel[2]){
+		if((controlPoints[i].r == pixel[0]) && (controlPoints[i].g == pixel[1]) && (controlPoints[i].b) == pixel[2]){
 			pointSelected = i;
 			break;
 		}
@@ -265,24 +273,24 @@ void BSpline::moveSelectedPoint(float f, char c){
 	switch(c){
 	case 'x':
 		controlPoints[pointSelected].x += f;
-		// Set a flag to recompute the frames
+		// Set a flag to recompute the spline and frames
 		hasChanged = true;
 		break;
 	case 'y':
 		controlPoints[pointSelected].y += f;
-		// Set a flag to recompute the frames
+		// Set a flag to recompute the spline and frames
 		hasChanged = true;
 		break;
 	case 'z':
 		controlPoints[pointSelected].z += f;
-		// Set a flag to recompute the frames
+		// Set a flag to recompute the spline and frames
 		hasChanged = true;
 		break;
 	}
 }
 
 void BSpline::addPoint(float x, float y, float z) {
-	Point newp = Point(x, y, z);
+	ControlPoint newp = ControlPoint(x, y, z);
 	controlPointsNum++;
 
 	if(controlPointsNum > MAX_POINTS){
@@ -304,13 +312,42 @@ void BSpline::addPoint(float x, float y, float z) {
 
 	// Set a flag to recompute the frames
 	hasChanged = true;
-	// Recalculate node vector
-	createNodeVector();
 }
 
-void BSpline::printArray(float* a, int size){
-	for(int i = 0; i < size; i++){
-		printf("%f ", a[i]);
+
+ControlPoint BSpline::evaluate(float t) {
+		if( count < 6 )
+			return ControlPoint();
+
+		// Handle boundry conditions
+		if( t <= times[0] )
+		{
+			return positions[0];
+		}
+		else if ( t >= times[count - 3] )
+		{
+			return positions[count - 3];
+		}
+
+		// Find segment and parameter
+		int segment = 0;
+		while(segment < count - 3) {
+			if( t <= times[segment + 1] ) break;
+			segment++;
+		}
+
+		float t0 = times[segment];
+		float t1 = times[segment + 1];
+		float u = (t - t0) / (t1 - t0);
+
+		// match segment index to standard B-spline terminology
+		segment += 3;
+
+		// Evaluate
+		ControlPoint A = positions[segment] - (positions[segment - 1] * 3.0f) + (positions[segment - 2] * 3.0f) - positions[segment - 3];
+		ControlPoint B = (positions[segment - 1] * 3.0f) - (positions[segment - 2] * 6.0f) + (positions[segment - 3] * 3.0f);
+		ControlPoint C = (positions[segment - 1] * 3.0f) - (positions[segment - 3] * 3.0f);
+		ControlPoint D = positions[segment - 1] + (positions[segment - 2] * 4.0f) + positions[segment - 3];
+
+		return (D + (C + (B + A * u) * u) * u) / 6.0f;
 	}
-	printf("\n");
-}
