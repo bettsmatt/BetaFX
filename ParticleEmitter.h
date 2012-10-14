@@ -20,6 +20,8 @@
 #include "define.h"
 #include <GL/glut.h>
 #include "Particle.h"
+#include "Ball.h"
+#include "Collision.h"
 
 class ParticleEmitter
 {
@@ -70,4 +72,5 @@ public:
 	void renderParticles();     // Render
 	void toggleRenderMode();	// Toggle between wire frame, solid and textured
 
+	void collideWithBalls(Ball*, Collision*);
 };

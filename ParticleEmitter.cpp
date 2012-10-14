@@ -300,9 +300,21 @@ void ParticleEmitter::renderParticles() {
 
 
 	glPopMatrix();
+}
 
-
-
-
-
+void ParticleEmitter::collideWithBalls(Ball* ball, Collision* c){
+	int count = 0;
+	for(int i = 0; i < MAX_PARTICLES && i < created ; i ++){
+		if(c->checkIfCollidedBallParticle(ball, particles[i])){
+			if(ball->isSpecial){
+				ball->increaseMass();
+				particles[i]->lifeSpanLeft = 0;
+			}
+			else{
+				count++;
+				//c->collisionBall(1, 100, 0.001, 1, 0.1, ball->position, particles[i]->position, ball->velocity, particles[i]->velocity);
+			}
+		}
+	}
+	if(count > 0) printf("Count: %d\n", count);
 }

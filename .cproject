@@ -38,6 +38,7 @@
 							<tool id="cdt.managedbuild.tool.gnu.assembler.base.2060099739" name="GCC Assembler" superClass="cdt.managedbuild.tool.gnu.assembler.base">
 								<inputType id="cdt.managedbuild.tool.gnu.assembler.input.1582393259" superClass="cdt.managedbuild.tool.gnu.assembler.input"/>
 							</tool>
+
 						</toolChain>
 					</folderInfo>
 				</configuration>

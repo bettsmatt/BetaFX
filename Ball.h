@@ -19,39 +19,25 @@
 
 #include "define.h"
 #include <GL/glut.h>
-#include <queue>
 
-class Particle
+class Ball
 {
 private:
-
-
-
 	float* acceletation; // x, y, z
-	float mass;
-
-	int lifeSpan;
-
 
 public:
-	int lifeSpanLeft;
-	float* position; // x, y, z
-	float* velocity; // x, y, z
-	Particle(float*); // Initial velocity
-	~Particle(void);
+
+	Ball(float*, float*, bool); // Initial velocity
+	~Ball(void);
 
 	void tick(); // Simulate one frame
 	bool isDead(); // Particle has expired
-	void renderParticle(); // Draw the particle
-
+	void renderBall(); // Draw the particle
 	void applyForce(float*); // Apply force to the particle, x, y, z
-	void applyFriction (float);
-	static void applyAttractiveForce (Particle*, Particle*, float, float);
+	void increaseMass();
 
-	void setPosition (float*); // Set the position
-
-
-
+	float* position; // x, y, z
+	float* velocity; // x, y, z
+	float mass;
+	bool isSpecial;
 };
-
-
