@@ -135,8 +135,6 @@ void tick (){
 	/*
 	 * Rotate the camera for effect
 	 */
-
-
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
 	gluPerspective(G308_FOVY, (double) g_nWinWidth / (double) g_nWinHeight, G308_ZNEAR_3D, G308_ZFAR_3D);
@@ -266,7 +264,7 @@ void G308_keyboardListener(unsigned char key, int x, int y) {
 	}
 
 	if(key == 'e')
-		for(int i = 0 ; i < 50 ; i ++)
+		for(int i = 0 ; i < 100 ; i ++)
 			particeEmitter->emit();
 
 

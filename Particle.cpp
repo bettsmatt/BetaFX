@@ -33,13 +33,6 @@ Particle::Particle(float* initialVelocity) {
 
 	mass = 1; // Default
 
-
-	/*
-	 * Color
-	 */
-
-	color = new float [3];
-
 	/*
 	 * Lifespan
 	 */
@@ -170,7 +163,7 @@ void Particle::applyAttractiveForce(Particle* p1, Particle* p2, float strength, 
 
 	// Vector between particles
 	for(int i = 0 ; i < 3 ; i ++)
-		vec[i] = p1->position[i] - p2->position[i];
+		vec[i] = p2->position[i] - p1->position[i];
 
 	// Distance
 	float dist = sqrt(
@@ -182,7 +175,7 @@ void Particle::applyAttractiveForce(Particle* p1, Particle* p2, float strength, 
 	// Close enough
 	if(dist < minDist){
 
-		float f = (strength * p1->mass * p2->mass) / (dist / dist);
+		float f = (strength * p1->mass * p2->mass) / (dist * dist);
 
 		float* vecN = new float[3];
 
@@ -193,13 +186,14 @@ void Particle::applyAttractiveForce(Particle* p1, Particle* p2, float strength, 
 		// Apply to each particle
 		p1->applyForce(vecN);
 
+		/* Limited to one way
 		// Invert for p2
 		for(int i = 0 ; i < 3 ; i ++)
 			vecN[i] = -vecN[i];
 
 		// Apply to p2
 		p2->applyForce(vecN);
-
+		 */
 	}
 
 	free(vec);

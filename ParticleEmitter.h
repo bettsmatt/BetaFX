@@ -36,7 +36,8 @@ private:
 	int created;
 	int index;
 
-	Particle* gravity;
+	int numGravity;
+	Particle** gravity;
 	bool gravityOn;
 
 public:

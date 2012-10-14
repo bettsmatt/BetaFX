@@ -19,6 +19,7 @@
 
 #include "define.h"
 #include <GL/glut.h>
+#include <queue>
 
 class Particle
 {
@@ -31,9 +32,6 @@ private:
 
 	int lifeSpan;
 	int lifeSpanLeft;
-
-	float* color;
-
 
 public:
 
