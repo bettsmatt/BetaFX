@@ -30,12 +30,13 @@ private:
 	float mass;
 
 	int lifeSpan;
-	int lifeSpanLeft;
+
 
 	float* color;
 
 
 public:
+	int lifeSpanLeft;
 	float* position; // x, y, z
 	float* velocity; // x, y, z
 	Particle(float*); // Initial velocity

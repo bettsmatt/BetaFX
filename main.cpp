@@ -13,6 +13,7 @@
 #include "ParticleEmitter.h"
 #include "Collision.h"
 #include "Ball.h"
+#include "Cube.h"
 
 #include "Camera.h"
 #include "BSpline.h"
@@ -42,6 +43,7 @@ void menu (int);
 
 void tick();
 void createBalls();
+void createCubes();
 
 float camAngle;
 float camHeight;
@@ -59,6 +61,7 @@ int numGeo, hitCount = 0;
 Camera* camera = NULL;
 BSpline* bspline = NULL;
 Shape* shape = NULL;
+Cube** cubes = NULL;
 
 int key_held = 0;
 
@@ -84,7 +87,6 @@ int main(int argc, char** argv) {
 	glutDisplayFunc(G308_display);
 	glutReshapeFunc(G308_Reshape);
 
-	maxBalls = 2;
 	particeEmitter = new ParticleEmitter();
 	float* v = new float[3];
 	v[0] = 0;
@@ -95,6 +97,9 @@ int main(int argc, char** argv) {
 	collision = new Collision();
 
 	createBalls();
+	createCubes();
+
+
 	loadTexture("sprite2.png", 1);
 
 	camAngle = 0;
@@ -149,10 +154,9 @@ void tick (){
 		balls[i]->tick();
 	}
 	for(int i = 0; i < maxBalls; i++){
-		for(int j = 0; j < maxBalls; j++){
+		for(int j = i+1; j < maxBalls; j++){
 			if(i != j && c->checkIfCollidedBalls(balls[i], balls[j])){
-				int error = 0;
-				c->collision3D(0.5, 100, 10, 2, 2, balls[i]->position, balls[j]->position, balls[i]->velocity, balls[j]->velocity, error);
+				c->collisionBall(1, balls[i]->mass, balls[j]->mass, 2, 2, balls[i]->position, balls[j]->position, balls[i]->velocity, balls[j]->velocity);
 			}
 		}
 	}
@@ -160,9 +164,15 @@ void tick (){
 		particeEmitter->collideWithBalls(balls[i], c);
 	}
 
+	for(int i = 0; i < maxBalls; i++){
+		for(int j = 0; j < 5; j++){
+			c->checkCollision(1.0, cubes[j], balls[i]);
+		}
+	}
+
 	if(animate == 1){
-			//camera->lookAt(bspline->nextFrame(), (double)g_nWinWidth, (double)g_nWinHeight);
-			shape->move(bspline->nextFrame());
+		//camera->lookAt(bspline->nextFrame(), (double)g_nWinWidth, (double)g_nWinHeight);
+		shape->move(bspline->nextFrame());
 	}
 
 	glutPostRedisplay();
@@ -180,14 +190,13 @@ void G308_init() {
 // Display call back
 void G308_display() {
 
-	glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	glEnable(GL_LIGHTING);
-	glEnable(GL_LIGHT0);
 	glEnable(GL_DEPTH_TEST);
+	glEnable(GL_LIGHTING);
 	glEnable(GL_COLOR_MATERIAL);
-
 	glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
+
 	glShadeModel(GL_SMOOTH);
 
 	GLenum err = glGetError();
@@ -222,13 +231,12 @@ void G308_display() {
 	particeEmitter->renderParticles();
 
 	for(int i = 0; i < maxBalls; i ++) balls[i]->renderBall();
-
+	//for(int j = 0; j < 5; j++) cubes[j]->renderCube();
 
 	glPopMatrix();
 
 	glDisable(GL_DEPTH_TEST);
 	glDisable(GL_LIGHTING);
-	glDisable(GL_LIGHT0);
 	glDisable(GL_COLOR_MATERIAL);
 
 	glutSwapBuffers();
@@ -239,31 +247,31 @@ void G308_display() {
  */
 void mouseMotion (int x, int y){
 	int diffx = x - lastx;
-		int diffy = y - lasty;
-		lastx = x;
-		lasty = y;
+	int diffy = y - lasty;
+	lastx = x;
+	lasty = y;
 
-		// Changing position of selected control point.
-		if(buttons[0] && key_held == MOVE_ALONG_X){
-			bspline->moveSelectedPoint((float) 0.05f * diffx, 'x');
-		}
-		else if(buttons[0] && key_held == MOVE_ALONG_Y){
-			bspline->moveSelectedPoint((float) 0.05f * diffx, 'y');
-		}
-		else if(buttons[0] && key_held == MOVE_ALONG_Z){
-			bspline->moveSelectedPoint((float) 0.05f * diffx, 'z');
-		}
-		// Change the view point of the scene.
-		else if (buttons[2]) {
-			camera->zoom -= (float) 0.05f * diffy;
-		} else if (buttons[0]) {
-			camera->rotx += (float) 0.5f * diffy;
-			camera->roty += (float) 0.5f * diffx;
-		} else if (buttons[1]) {
-			camera->tx += (float) 0.05f * diffx;
-			camera->ty -= (float) 0.05f * diffy;
-		}
-		glutPostRedisplay();
+	// Changing position of selected control point.
+	if(buttons[0] && key_held == MOVE_ALONG_X){
+		bspline->moveSelectedPoint((float) 0.05f * diffx, 'x');
+	}
+	else if(buttons[0] && key_held == MOVE_ALONG_Y){
+		bspline->moveSelectedPoint((float) 0.05f * diffx, 'y');
+	}
+	else if(buttons[0] && key_held == MOVE_ALONG_Z){
+		bspline->moveSelectedPoint((float) 0.05f * diffx, 'z');
+	}
+	// Change the view point of the scene.
+	else if (buttons[2]) {
+		camera->zoom -= (float) 0.05f * diffy;
+	} else if (buttons[0]) {
+		camera->rotx += (float) 0.5f * diffy;
+		camera->roty += (float) 0.5f * diffx;
+	} else if (buttons[1]) {
+		camera->tx += (float) 0.05f * diffx;
+		camera->ty -= (float) 0.05f * diffy;
+	}
+	glutPostRedisplay();
 }
 
 /*
@@ -423,30 +431,68 @@ void G308_SetLight() {
 	GLfloat positionPoint[] = { 0, 0, 0, 1 };
 	float diffusePoint[] = { 1, 1, 1, 1 };
 	float specularPoint[] = { 1, 1, 1, 1 };
-
 	glLightfv(GL_LIGHT0, GL_POSITION, positionPoint);
 	glLightfv(GL_LIGHT0, GL_DIFFUSE, diffusePoint);
 	glLightfv(GL_LIGHT0, GL_SPECULAR, specularPoint);
 
+	GLfloat directionPosision[] = { 0.0f, 1.0f, 1.0f, 0.0f };
+	GLfloat directionDiffuse[] = { 0.3f, 0.3f, 0.3f, 0.0f };
+	GLfloat directionSpecular[] = { 0.3f, 0.3f, 0.3f, 0.0f };
+	glLightfv(GL_LIGHT1, GL_POSITION, directionPosision);
+	glLightfv(GL_LIGHT1, GL_DIFFUSE, directionDiffuse);
+	glLightfv(GL_LIGHT1, GL_SPECULAR, directionSpecular);
 
+	glEnable(GL_LIGHT0);
+	glEnable(GL_LIGHT1);
 }
 
 void createBalls(){
 	balls = new Ball*[maxBalls];
+	maxBalls = 5;
 	for(int i = 0; i < maxBalls; i++){
 		if(i == 0){
-			float v[3] = {-0.01f, -0.00f, 0.0f};
+			float v[3] = {-0.1f, 0.1f, 0.0f};
+			//float v[3] = {0.00f, 0.00f, 0.0f};
 			float p[3] = {3.0f, 0.0f, 1.0f};
 
-			balls[i] = new Ball(p, v);
+			balls[i] = new Ball(p, v, false);
 		}
 		if(i == 1){
-			float v[3] = {0.01f, 0.01f, 0.0f};
+			float v[3] = {0.1f, 0.1f, 0.0f};
+			//float v[3] = {0.00f, 0.00f, 0.0f};
 			float p[3] = {-6.0f, -4.0f, 0.0f};
 
-			balls[i] = new Ball(p, v);
+			balls[i] = new Ball(p, v, true);
+		}
+		if(i == 2){
+			float v[3] = {-0.1f, 0.1f, 0.1f};
+			//float v[3] = {0.00f, 0.00f, 0.0f};
+			float p[3] = {-2.0f, -4.0f, 0.0f};
+
+			balls[i] = new Ball(p, v, false);
+		}
+		if(i == 3){
+			float v[3] = {0.1f, 0.1f, 0.0f};
+			//float v[3] = {0.00f, 0.00f, 0.0f};
+			float p[3] = {-6.0f, -0.0f, 0.0f};
+
+			balls[i] = new Ball(p, v, false);
+		}
+		if(i == 4){
+			float v[3] = {0.1f, 0.1f, 0.0f};
+			//float v[3] = {0.00f, 0.00f, 0.0f};
+			float p[3] = {3.0f, 2.0f, 0.0f};
+
+			balls[i] = new Ball(p, v, true);
 		}
 	}
-
 }
 
+void createCubes(){
+	cubes = new Cube*[5];
+	cubes[0] = new Cube(0, -255, 0, 500, 500);
+	cubes[1] = new Cube(-260, 0, 0, 500, 500);
+	cubes[2] = new Cube(260, 0, 0, 500, 500);
+	cubes[3] = new Cube(0, 0, -260, 500, 500);
+	cubes[4] = new Cube(0, 0, 260, 500, 500);
+}
