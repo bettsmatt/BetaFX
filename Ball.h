@@ -24,18 +24,20 @@ class Ball
 {
 private:
 	float* acceletation; // x, y, z
-	float mass;
 
 public:
 
-	Ball(float*, float*); // Initial velocity
+	Ball(float*, float*, bool); // Initial velocity
 	~Ball(void);
 
 	void tick(); // Simulate one frame
 	bool isDead(); // Particle has expired
 	void renderBall(); // Draw the particle
 	void applyForce(float*); // Apply force to the particle, x, y, z
+	void increaseMass();
 
 	float* position; // x, y, z
 	float* velocity; // x, y, z
+	float mass;
+	bool isSpecial;
 };

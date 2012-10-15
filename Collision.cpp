@@ -23,19 +23,19 @@ bool Collision::checkIfCollidedBallParticle(Ball* b, Particle* p){
 
 float Collision::calculateVectorDistance(float *v1, float* v2)
 {
-	float* v = new float[3];
-	v[0] = v1[0] - v2[0];
-	v[1] = v1[1] - v2[1];
-	v[2] = v1[2] - v2[2];
+	float v[3] = {
+			v1[0] - v2[0],
+			v1[1] - v2[1],
+			v1[2] - v2[2]
+	};
 	return sqrt(v[0]*v[0] + v[1]*v[1] + v[2]*v[2]);
 }
 
 
-void Collision::collision3D(double cor, double mass1, double mass2, double radius1, double radius2,
-		float* pos1, float* pos2, float* vel1, float* vel2, int error){
-//	printf("Ball position is before: %f        ", pos1[0]);
+void Collision::collisionBall(double cor, double mass1, double mass2, double radius1, double radius2,
+		float* pos1, float* pos2, float* vel1, float* vel2){
+	//	printf("Ball position is before: %f        ", pos1[0]);
 	// Initialize
-	error = 0;
 	float totalRadius = radius1 + radius2;
 	float totalMass = mass2 / mass1;
 	float distance[3] =  {pos2[0] - pos1[0], pos2[1] - pos1[1], pos2[2] - pos1[2]};
@@ -55,14 +55,14 @@ void Collision::collision3D(double cor, double mass1, double mass2, double radiu
 	if (distance[0] != 0 || distance[1] != 0) phi2 = atan2(distance[1], distance[0]);
 
 
-//	printf("pos2[2]: %f  relativeDistance: %f \n", distance[2], relativeDistance);
+	//	printf("pos2[2]: %f  relativeDistance: %f \n", distance[2], relativeDistance);
 	float st = sin(acos(distance[2] / relativeDistance));
 	float ct = cos(acos(distance[2] / relativeDistance));
 	float sp = sin(phi2);
 	float cp = cos(phi2);
 
-//	printf("st: %f\n", st);
-//	printf("ct: %f\n", ct);
+	//	printf("st: %f\n", st);
+	//	printf("ct: %f\n", ct);
 
 	// Express the velocity vector of ball 1 in a rotated coordinate
 	// System where ball 2 lies on the z-axis
@@ -106,6 +106,71 @@ void Collision::collision3D(double cor, double mass1, double mass2, double radiu
 		pos2[i] += vel2[i];
 	}
 
-//	printf("Ball position is after: %f\n", pos1[0]);
+	//	printf("Ball position is after: %f\n", pos1[0]);
 	return;
+}
+
+void Collision::collisionPlane(double cor, float* ballVel, float* planeNormal){
+	//Project the spheres velocity on the planes normal
+	// a . b
+	// ----- * b
+	//  |a|
+	float velocityMag = vectorMagnitude(ballVel);
+	float dotProduct = vectorDotProduct(ballVel, planeNormal);
+	float projectionLength = dotProduct / velocityMag;
+
+	float projectionVector[3] = {
+			planeNormal[0] * projectionLength,
+			planeNormal[1] * projectionLength,
+			planeNormal[2] * projectionLength
+	};
+
+	//multiply the projection by 2
+	cor += 1;
+	projectionVector[0] *= cor;
+	projectionVector[1] *= cor;
+	projectionVector[2] *= cor;
+
+	//subtract it from the spheres velocity
+	float finalVelocity[3] = {
+			ballVel[0] - projectionVector[0],
+			ballVel[1] - projectionVector[1],
+			ballVel[2] - projectionVector[2]
+	};
+
+	ballVel = finalVelocity;
+}
+
+void Collision::checkCollision(double cor, Cube *c, Ball *b)
+{                                        // C->X-C->SizeX/2
+	if ( ((b->position[0] + b->mass) >= (c->position[0] - c->width/2) &&
+			(b->position[0] - b->mass) <= (c->position[0] + c->width/2)) &&
+
+			((b->position[1] + b->mass) >= (c->position[1] - c->height/2) &&
+					(b->position[1] - b->mass) <= (c->position[1] + c->height/2)) &&
+
+					((b->position[2] + b->mass) >= (c->position[2] - c->height/2) &&
+							(b->position[2] - b->mass) <= (c->position[2] + c->height/2)))
+	{
+		//Collision occured - check which direction to bounce in
+		if((b->position[0] > (c->position[0] + c->width/2) && b->velocity[0] < 0) ||
+				(b->position[0] < (c->position[0] - c->width/2) && b->velocity[0] > 0)){
+			//Collision in x direction
+			b->position[0] -= b->velocity[0]; //Move back
+			b->velocity[0] = -b->velocity[0]*cor; //Invert velocity
+		}
+		else if((b->position[1] > (c->position[1] + c->height/2) && b->velocity[1] < 0) ||
+				(b->position[1] < (c->position[1] - c->height/2) && b->velocity[1] > 0)){
+			//float n[3] = {0, 1, 0};
+			//collisionPlane(1, b->velocity, n);
+			//Collision in z direction
+			b->position[1] -= b->velocity[1]; //Move back
+			b->velocity[1] = -b->velocity[1]*cor; //Invert velocity
+		}
+		else if((b->position[2] > (c->position[2] + c->height/2) && b->velocity[2] < 0) ||
+				(b->position[2] < (c->position[2] - c->height/2) && b->velocity[2] > 0)){
+			b->position[2] -= b->velocity[2]; //Move back
+			b->velocity[2] = -b->velocity[2]*cor; //Invert velocity
+		}
+	}
 }

@@ -34,15 +34,51 @@ ParticleEmitter::ParticleEmitter(void) {
 	created = 0;
 
 	gravityOn = false;
-	float* v = new float[3];
-	gravity = new Particle(v);
 
-	float* p = new float[3];
-	p[0] = 5;
-	p[1] = 0;
+	numGravity = 3;
 
-	setGravity(p);
-	gravityOn=true;
+	float** v = (float**) malloc (sizeof (float) * numGravity);
+	float** p = (float**) malloc (sizeof (float) * numGravity);
+
+	for(int i = 0 ; i < numGravity ; i ++){
+		v[i] = new float[3];
+		p[i] = new float[3];
+	}
+
+	p[0][0] = 10;
+	p[1][0] = -10;
+	p[2][2] = 10;
+
+	for(int i = 0 ; i < numGravity ; i ++){
+
+		// Up
+		float* up = new float[3];
+		up[1] = 1;
+
+		// Take cross product of position and z, multiply by some number
+		v[i][0] = (up[1] * p[i][2] - up[2] * p[i][1]) * 0.001f;
+		v[i][1] = (up[2] * p[i][0] - up[0] * p[i][2]) * 0.001f;
+		v[i][2] = (up[0] * p[i][1] - up[1] * p[i][0]) * 0.001f;
+
+
+	}
+
+
+
+
+
+	/*
+	 * Test Gravity Wells
+	 */
+	numGravity = 3;
+	gravity = (Particle**) malloc (sizeof(Particle*) * numGravity);
+	for(int i = 0 ; i < numGravity ; i ++){
+		gravity[i] = new Particle(v[i]);
+		gravity[i]->setPosition(p[i]);
+	}
+
+
+	gravityOn = true;
 
 }
 
@@ -121,14 +157,28 @@ void ParticleEmitter::tick(){
 
 		// Alive!
 		if(!particles[i]->isDead()){
-			//particles[i]->applyForce(force);
-			particles[i]->tick(); // Simulate
-			particles[i]->applyFriction(0.0001f);
+
+			particles[i]->applyFriction(0.001f);
 
 			if(gravityOn)
-				particles[i]->applyAttractiveForce(particles[i],gravity,-0.002f,100);
+				for(int j = 0 ; j < numGravity ; j ++)
+					particles[i]->applyAttractiveForce(particles[i], gravity[j], 0.2f, 100);
+
+			particles[i]->tick(); // Simulate
 
 		}
+
+
+	for(int i = 0 ; i < numGravity ; i ++){
+		for(int j = 0 ; j < numGravity ; j ++){
+			if(i != j)
+				gravity[i]->applyAttractiveForce(gravity[i], gravity[j], 0.002f, 1000);
+		}
+	}
+
+	for(int i = 0 ; i < numGravity ; i ++){
+		gravity[i]->tick();
+	}
 
 }
 
@@ -190,9 +240,6 @@ void ParticleEmitter::setVector(float* v){
 
 }
 
-void ParticleEmitter::setGravity(float* pos){
-	gravity->setPosition(pos);
-}
 void ParticleEmitter::turnGravityOn(){
 	gravityOn = true;
 }
@@ -235,6 +282,8 @@ void ParticleEmitter::renderParticles() {
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 
+
+
 	// Loop through all active particles drawing them
 	for(int i = 0; i < MAX_PARTICLES && i < created ; i ++)
 
@@ -246,18 +295,26 @@ void ParticleEmitter::renderParticles() {
 	glDisable(GL_POINT_SPRITE_ARB);
 	glDisable(GL_TEXTURE_2D);
 
-	gravity->renderParticle();
+	for(int i = 0; i < numGravity ; i ++)
+		gravity[i]->renderParticle();
 
 
 	glPopMatrix();
 }
 
 void ParticleEmitter::collideWithBalls(Ball* ball, Collision* c){
+	int count = 0;
 	for(int i = 0; i < MAX_PARTICLES && i < created ; i ++){
 		if(c->checkIfCollidedBallParticle(ball, particles[i])){
-			int error = 0;
-			c->collision3D(1, 100, 0.001, 1, 0.1, ball->position, particles[i]->position, ball->velocity, particles[i]->velocity, error);
+			if(ball->isSpecial){
+				ball->increaseMass();
+				particles[i]->lifeSpanLeft = 0;
+			}
+			else{
+				count++;
+				//c->collisionBall(1, 100, 0.001, 1, 0.1, ball->position, particles[i]->position, ball->velocity, particles[i]->velocity);
+			}
 		}
 	}
+	if(count > 0) printf("Count: %d\n", count);
 }
-

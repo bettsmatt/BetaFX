@@ -20,12 +20,13 @@
 #include <stdlib.h>
 #include <math.h>
 
-Ball::Ball(float* initialPosition, float* initialVelocity) {
+Ball::Ball(float* initialPosition, float* initialVelocity, bool sp) {
 
 	// Zero
 	position = new float[3];
 	velocity = new float[3];
 	acceletation = new float[3];
+	isSpecial = sp;
 
 	// Set initial velocity
 	for(int i = 0 ; i < 3 ; i ++)
@@ -53,15 +54,30 @@ void Ball::applyForce(float* force){
 }
 
 void Ball::tick (){
+	// Friction
+	/*float friction = 0.00001f;
+		for(int i = 0 ; i < 3 ; i ++){
+			if(velocity[i] < -0.001) acceletation[i] += friction;
+			else if(velocity[i] > 0.001) acceletation[i] += -friction;
+			else{
+				velocity[i] = 0.0f;
+				acceletation[i] = 0.0f;
+			}
+		}
+
+		printf("Velocity x: %f  y: %f  z: %f\n", velocity[0], velocity[1], velocity[2]);*/
 	/*
 	 * Apply acceleration to velocity,
 	 * Update the position by the new velocity.
 	 * Zero the old acceleration
 	 */
+	acceletation[1] = -0.003f;
 	for(int i = 0 ; i < 3 ; i ++){
 		velocity[i] += acceletation[i];
 		position[i] += velocity[i];
 		acceletation[i] = 0;
+
+		if(velocity[i] > 5) velocity[i] = 5;
 	}
 }
 
@@ -69,15 +85,22 @@ void Ball::renderBall() {
 
 	glPushMatrix();
 
-	glColor3f(0.5f, 0.5f, 0.5f);
+	if(isSpecial) glColor3f(0.5f, 0.0f, 0.5f);
+	else glColor3f(0.5f, 0.5f, 0.0f);
 	glTranslatef(
 			position[0],
 			position[1],
 			position[2]
 	);
 
-	glutSolidSphere(1,20,20);
+	glutSolidSphere(mass,20,20);
 
 	glPopMatrix();
 
+}
+
+void Ball::increaseMass() {
+	mass += 0.001;
+
+	if(mass > 2) isSpecial = false;
 }
