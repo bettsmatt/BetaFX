@@ -11,10 +11,20 @@
 #include "ControlPoint.h"
 #include "BSpline.h"
 
+struct RefFrame{
+	ControlPoint T;
+	ControlPoint N;
+	ControlPoint B;
+};
+
 class Camera {
+
+private:
+	RefFrame* ref;
+	int count;
+
 public:
 	float zoom, rotx, roty, tx, ty;
-
 	Camera();
 	virtual ~Camera();
 
@@ -22,7 +32,7 @@ public:
 	void rotateCamera();
 	void resetCamera(float* zoom, float* tx, float* ty, float* rotx, float* roty);
 
-	void lookAt(Frame, double, double);
+	void lookAt(BSpline*, double, double);
 };
 
 #endif /* CAMERA_H_ */

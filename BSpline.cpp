@@ -16,11 +16,12 @@
 BSpline::BSpline() {
 	controlPointsNum = 5;
 	controlPoints = new ControlPoint[MAX_POINTS];
-	controlPoints[0] = ControlPoint(15, 10, 0, 1.0f);
-	controlPoints[1] = ControlPoint(5, 10, 2, 2.0f);
+	controlPoints[0] = ControlPoint(15, -0.5, 0, 1.0f);
+	controlPoints[1] = ControlPoint(5, -2, 14, 2.0f);
 	controlPoints[2] = ControlPoint(-5, 0, 0, 3.0f);
 	controlPoints[3] = ControlPoint(-10, 5, -2, 2.0f);
 	controlPoints[4] = ControlPoint(-15, 5, -2, 1.0f);
+
 }
 
 BSpline::BSpline(ControlPoint* points, int num){
@@ -46,6 +47,7 @@ void BSpline::init(){
 	currentFrame = 0;
 	hasChanged = false;
 	infoDisplay = false;
+	pointAdded = false;
 	positions = NULL;
 	times = NULL;
 	startTime = 0.0f;
@@ -130,7 +132,10 @@ void BSpline::drawControlPoints(GLenum mode) {
 //****************************************************************************
 void BSpline::recalculate(){
 	computeKnots();
-	computeTimes();
+	if(pointAdded){
+		pointAdded = false;
+		computeTimes();
+	}
 	computeFrames();
 }
 
@@ -171,7 +176,7 @@ void BSpline::computeTimes(){
 
 void BSpline::computeFrames(){
 	if (frames != NULL)
-			delete[] frames;
+		delete[] frames;
 
 	numSplinePieces = 0;
 	for (float t = startTime; t < endTime; t += deltaTime) {
@@ -181,8 +186,10 @@ void BSpline::computeFrames(){
 
 	int k = 0;
 	Frame* f = (Frame*)malloc(sizeof(Frame));
-	for (float t = startTime; t < endTime; t += deltaTime) {
+	for (float t = startTime; t <= endTime; t += deltaTime) {
 		f->ctrlPoint = evaluate(t);
+		f->tangent = computeTangent(t);
+		f->tangent.normalize();
 		frames[k++] = *f;
 	}
 	free(f);
@@ -195,6 +202,10 @@ Frame BSpline::nextFrame(){
 		currentFrame = 0;
 	}
 	return p;
+}
+
+float BSpline::nextTime(){
+	return (currentFrame - 1) * deltaTime;
 }
 
 //****************************************************************************
@@ -211,9 +222,10 @@ void BSpline::promptForNewTimes(){
 void BSpline::readNewTimes(){
 	float number = 0;
 	for (int i = 0; i < controlPointsNum; i++) {
-		scanf("%f", &number);
-		times[i+1] = number * endTime;
-		controlPoints[i].time = times[i + 1];
+		if(scanf("%f", &number) == 1){
+			times[i+1] = number * endTime;
+			controlPoints[i].time = times[i + 1];
+		}
 	}
 	printf("\nTimes after change:\n");
 	for (int i = 0; i < controlPointsNum; i++) {
@@ -239,6 +251,13 @@ void BSpline::readNewInterval(){
 	times[controlPointsNum + 1] = endTime;
 	printf("\nTime interval after change is %.2f\n", endTime);
 	hasChanged = true;
+}
+
+void BSpline::printCoordinates(){
+	printf("Coordinates:\n");
+	for (int i = 0; i < controlPointsNum; i++){
+		printf("%i %.2f %.2f %.2f\n", i, controlPoints[i].x, controlPoints[i].y, controlPoints[i].z);
+	}
 }
 
 //****************************************************************************
@@ -290,7 +309,7 @@ void BSpline::moveSelectedPoint(float f, char c){
 }
 
 void BSpline::addPoint(float x, float y, float z) {
-	ControlPoint newp = ControlPoint(x, y, z);
+	ControlPoint* newp = new ControlPoint(x, y, z);
 	controlPointsNum++;
 
 	if(controlPointsNum > MAX_POINTS){
@@ -307,11 +326,13 @@ void BSpline::addPoint(float x, float y, float z) {
 		lastG = 0;
 		lastB += 20;
 	}
-	controlPoints[controlPointsNum - 1] = newp;
+	controlPoints[controlPointsNum - 1] = *newp;
 	controlPoints[controlPointsNum - 1].setColourID(lastR, lastG, lastB);
 
 	// Set a flag to recompute the frames
 	hasChanged = true;
+	pointAdded = true;
+	delete newp;
 }
 
 
@@ -350,4 +371,40 @@ ControlPoint BSpline::evaluate(float t) {
 		ControlPoint D = positions[segment - 1] + (positions[segment - 2] * 4.0f) + positions[segment - 3];
 
 		return (D + (C + (B + A * u) * u) * u) / 6.0f;
+}
+
+ControlPoint BSpline::computeTangent(float t) {
+	if (count < 6)
+		return ControlPoint();
+
+	// Handle boundry conditions
+	if (t <= times[0]) {
+		return positions[0];
+	} else if (t >= times[count - 3]) {
+		return positions[count - 3];
 	}
+
+	// Find segment and parameter
+	int segment = 0;
+	while (segment < count - 3) {
+		if (t <= times[segment + 1])
+			break;
+		segment++;
+	}
+
+	float t0 = times[segment];
+	float t1 = times[segment + 1];
+	float u = (t - t0) / (t1 - t0);
+
+	// match segment index to standard B-spline terminology
+	segment += 3;
+
+	// Evaluate
+	ControlPoint A = positions[segment] - (positions[segment - 1] * 3.0f) + (positions[segment - 2] * 3.0f) - positions[segment - 3];
+	ControlPoint B = (positions[segment - 1] * 3.0f) - (positions[segment - 2] * 6.0f) + (positions[segment - 3] * 3.0f);
+	ControlPoint C = (positions[segment - 1] * 3.0f) - (positions[segment - 3] * 3.0f);
+	ControlPoint D = positions[segment - 1] + (positions[segment - 2] * 4.0f) + positions[segment - 3];
+
+	return (C + (B * 2 + (A * 3) * u) * u) / 6.0f;
+}
+

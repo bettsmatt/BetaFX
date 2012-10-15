@@ -161,9 +161,14 @@ void tick (){
 	}
 
 	if(animate == 1){
-			//camera->lookAt(bspline->nextFrame(), (double)g_nWinWidth, (double)g_nWinHeight);
-			shape->move(bspline->nextFrame());
+			camera->lookAt(bspline, (double)g_nWinWidth, (double)g_nWinHeight);
+			//shape->move(bspline);
 	}
+
+
+
+
+
 
 	glutPostRedisplay();
 	free(c);
@@ -215,6 +220,7 @@ void G308_display() {
 
 	// Draw the shape that goes along the spline
 	shape->draw();
+
 
 	/*
 	 * Draw the particle emmiter and it's particles
@@ -390,6 +396,9 @@ void G308_keyboardListener(unsigned char key, int x, int y) {
 		bspline->readNewInterval();
 		glutPostRedisplay();
 	}
+	else if(key == 'c'){
+		bspline->printCoordinates();
+	}
 }
 
 
@@ -414,7 +423,7 @@ void G308_SetLight() {
 	/*
 	 * Ambient
 	 */
-	GLfloat ambientG[] = { 1, 1, 1, 1 };
+	GLfloat ambientG[] = { 1, 1, 1, 0 };
 	glLightModelfv(GL_LIGHT_MODEL_AMBIENT,ambientG);
 
 	/*

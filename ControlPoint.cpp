@@ -9,6 +9,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <GL/glut.h>
+#include <math.h>
 
 ControlPoint::ControlPoint() {
 	x = y = z = 0.0f;
@@ -80,6 +81,15 @@ void ControlPoint::showTime() {
 	glPopMatrix();
 }
 
+void ControlPoint::normalize(){
+	float mag = sqrt(x*x + y*y + z*z);
+	//if(mag > 1){
+	x /= mag;
+	y /= mag;
+	z /= mag;
+	//}
+}
+
 ControlPoint operator+(const ControlPoint& p1, const ControlPoint& p2) {
 	ControlPoint q(p1.x + p2.x, p1.y + p2.y, p1.z + p2.z);
 	return q;
@@ -125,3 +135,5 @@ ControlPoint crossProduct(ControlPoint p, ControlPoint q) {
 	cross.z = p.x * q.y - p.y * q.x;
 	return cross;
 }
+
+
