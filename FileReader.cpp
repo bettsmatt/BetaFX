@@ -16,7 +16,7 @@
 FileReader::FileReader(bone* r) {
 	buffSize = 200;
 	maxBones = 60;
-	currentFrameNumber = 0;
+	totalFrameNum = 0;
 	numBones = 1;
 	root = r;
 }
@@ -54,7 +54,7 @@ void FileReader::readAMC(char* filename){
 				// Skip over :DEGREES
 				fgets(buff, buffSize, file);
 				while(fgets(buff, buffSize, file) != NULL) {
-					sscanf(buff,"%d",&currentFrameNumber);
+					sscanf(buff,"%d",&totalFrameNum);
 //					printf("============== BEGIN FRAME %i============\n", currentFrameNumber);
 					for (int b = 0; b < NUM_BONES_WITH_DOF; b++) {
 						fgets(buff, buffSize, file);
@@ -70,7 +70,7 @@ void FileReader::readAMC(char* filename){
 									sscanf(transformations, "%f %f %f", &x, &y, &z);
 									bonerotation* br = (bonerotation*) malloc(sizeof(bonerotation));
 									br->rx = x; br->ry = y; br->rz = z;
-									root[i].frames[currentFrameNumber] = *br;
+									root[i].frames[totalFrameNum] = *br;
 //									printf("	%s", root[i].name);
 //									printf("	DOF: %i, %f %f %f\n", root[i].dof, br->rx, br->ry, br->rz);
 									break;
@@ -79,7 +79,7 @@ void FileReader::readAMC(char* filename){
 									sscanf(transformations, "%f %f", &x, &y);
 									bonerotation* br = (bonerotation*) malloc(sizeof(bonerotation));
 									br->rx = x; br->ry = y;
-									root[i].frames[currentFrameNumber] = *br;
+									root[i].frames[totalFrameNum] = *br;
 //									printf("	%s", root[i].name);
 //									printf("	DOF: %i, %f %f\n", root[i].dof, br->rx, br->ry);
 									break;
@@ -88,7 +88,7 @@ void FileReader::readAMC(char* filename){
 									sscanf(transformations, "%f %f", &x, &z);
 									bonerotation* br = (bonerotation*) malloc(sizeof(bonerotation));
 									br->rx = x; br->rz = z;
-									root[i].frames[currentFrameNumber] = *br;
+									root[i].frames[totalFrameNum] = *br;
 //									printf("	%s", root[i].name);
 //									printf("	DOF: %i, %f %f\n", root[i].dof, br->rx, br->rz);
 									break;
@@ -97,7 +97,7 @@ void FileReader::readAMC(char* filename){
 									sscanf(transformations, "%f %f", &y, &z);
 									bonerotation* br = (bonerotation*) malloc(sizeof(bonerotation));
 									br->ry = y; br->rz = z;
-									root[i].frames[currentFrameNumber] = *br;
+									root[i].frames[totalFrameNum] = *br;
 //									printf("	%s", root[i].name);
 //									printf("	DOF: %i, %f %f\n", root[i].dof, br->ry, br->rz);
 									break;
@@ -106,7 +106,7 @@ void FileReader::readAMC(char* filename){
 									sscanf(transformations, "%f", &x);
 									bonerotation* br = (bonerotation*) malloc(sizeof(bonerotation));
 									br->rx = x;
-									root[i].frames[currentFrameNumber] = *br;
+									root[i].frames[totalFrameNum] = *br;
 //									printf("	%s", root[i].name);
 //									printf("	DOF: %i, %f\n", root[i].dof, br->rx);
 									break;
@@ -115,7 +115,7 @@ void FileReader::readAMC(char* filename){
 									sscanf(transformations, "%f", &y);
 									bonerotation* br = (bonerotation*) malloc(sizeof(bonerotation));
 									br->ry = y;
-									root[i].frames[currentFrameNumber] = *br;
+									root[i].frames[totalFrameNum] = *br;
 //									printf("	%s", root[i].name);
 //									printf("	DOF: %i, %f\n", root[i].dof, br->ry);
 									break;
@@ -124,7 +124,7 @@ void FileReader::readAMC(char* filename){
 									sscanf(transformations, "%f", &z);
 									bonerotation* br = (bonerotation*) malloc(sizeof(bonerotation));
 									br->rz = z;
-									root[i].frames[currentFrameNumber] = *br;
+									root[i].frames[totalFrameNum] = *br;
 //									printf("	%s", root[i].name);
 //									printf("	DOF: %i, %f\n", root[i].dof, br->rz);
 									break;
@@ -137,7 +137,7 @@ void FileReader::readAMC(char* filename){
 									//root->br[currentFrameNumber] = (bonerotation*) malloc(sizeof(bonerotation));
 									br->rx = x; br->ry = y; br->rz = z;
 									br->tx = tx; br->ty = ty; br->tz = tz;
-									root->frames[currentFrameNumber] = *br;
+									root->frames[totalFrameNum] = *br;
 //									printf("	%s", root[i].name);
 //									printf("	DOF: %i, %f %f %f %f %f %f\n", root[i].dof, br->tx, br->ty, br->tz, br->rx, br->ry, br->rz);
 									break;

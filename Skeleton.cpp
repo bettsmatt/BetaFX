@@ -29,11 +29,11 @@
 
 Skeleton::Skeleton() {
 	numBones = 1;
-	motionframe = 1;
-	currentFrameNumber = 0;
 	buffSize = 200;
 	maxBones = 60;
 	amcFileProvided = false;
+	totalFrameNum = 0;
+	amc_frame = 1;
 	angle = 0;
 	rotAxis = ControlPoint();
 	root = (bone*) malloc(sizeof(bone) * maxBones);
@@ -148,11 +148,13 @@ void Skeleton::move(BSpline* bs){
 	angle = angle * (180.0 / 3.1416);
 
 	// Move AMC animation one frame forward.
+	amc_frame++;
+	if(amc_frame > totalFrameNum) amc_frame = 1;
 }
 
 void Skeleton::doAMCrotation(bone* bone){
 
-	bonerotation b = bone->frames[motionframe];
+	bonerotation b = bone->frames[amc_frame];
 	if(bone->dof == 7){
 		glRotatef(b.rz, 0.0, 0.0, 1.0);
 		glRotatef(b.ry, 0.0, 1.0, 0.0);
@@ -187,7 +189,7 @@ void Skeleton::doAMCrotation(bone* bone){
 //		printf("%s: %f\n", bone->name, b.rx);
 	}
 	else if(bone->dof == 8){
-		glTranslatef(b.tx, b.ty,b.tz);
+		//glTranslatef(b.tx, b.ty,b.tz);
 		glRotatef(b.rz, 0.0, 0.0, 1.0);
 		glRotatef(b.ry, 0.0, 1.0, 0.0);
 		glRotatef(b.rx, 1.0, 0.0, 0.0);

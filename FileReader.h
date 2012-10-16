@@ -29,9 +29,10 @@ class FileReader {
 
 private:
 	int buffSize, maxBones;
-	int currentFrameNumber;
+
 public:
 	int numBones;
+	int totalFrameNum;
 	bone* root;
 	FileReader(bone*);
 	virtual ~FileReader();

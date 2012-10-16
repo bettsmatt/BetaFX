@@ -150,6 +150,7 @@ int main(int argc, char** argv) {
 		if(argc > 2){
 			fReader->readAMC(argv[2]);
 			skeleton->amcFileProvided = true;
+			skeleton->totalFrameNum = fReader->totalFrameNum;
 		}
 	}
 

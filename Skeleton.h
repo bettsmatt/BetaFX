@@ -86,9 +86,8 @@ private:
 
 public:
 	int numBones;
-	int motionframe;
 	bool amcFileProvided;
-	int currentFrameNumber;
+	int totalFrameNum;
 	bone* root;
 	Skeleton();
 	~Skeleton();
