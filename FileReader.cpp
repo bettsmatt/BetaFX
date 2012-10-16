@@ -153,7 +153,6 @@ void FileReader::readAMC(char* filename){
 			}
 		}
 	}
-
 	delete[] buff;
 	fclose(file);
 	printf("Completed reading motion capture file\n");

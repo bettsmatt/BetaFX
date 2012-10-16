@@ -146,6 +146,10 @@ int main(int argc, char** argv) {
 		skeleton = new Skeleton();
 		fReader = new FileReader(skeleton->root);
 		fReader->readASF(argv[1]);
+		if(argc > 2){
+			fReader->readAMC(argv[2]);
+			skeleton->amcFileProvided = true;
+		}
 	}
 
 	/* Set the menu */
