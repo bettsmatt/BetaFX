@@ -29,10 +29,11 @@
 
 Skeleton::Skeleton() {
 	numBones = 1;
-	motionframe = 1;
-	currentFrameNumber = 0;
 	buffSize = 200;
 	maxBones = 60;
+	amcFileProvided = false;
+	totalFrameNum = 0;
+	amc_frame = 1;
 	angle = 0;
 	rotAxis = ControlPoint();
 	root = (bone*) malloc(sizeof(bone) * maxBones);
@@ -135,11 +136,9 @@ void Skeleton::drawParts(bone* root, GLUquadric* q) {
 }
 
 void Skeleton::move(BSpline* bs){
-	printf("Move\n");
+	// Move skeleton along the spline.
 	Frame f = bs->nextFrame();
-	printf("f: %f %f %f\n", f.ctrlPoint.x, f.ctrlPoint.y, f.ctrlPoint.z);
 	position = f.ctrlPoint;
-	printf("position: %f %f %f\n", position.x, position.y, position.z);
 	ControlPoint zVector = ControlPoint(0, 0, 1);
 	//f.tangent.normalize();
 
@@ -147,12 +146,15 @@ void Skeleton::move(BSpline* bs){
 	angle = dotProduct(zVector, f.tangent);
 	angle = acos(angle);
 	angle = angle * (180.0 / 3.1416);
-	printf("a: %f\t axis: %f %f %f\n", angle, rotAxis.x, rotAxis.y, rotAxis.z);
+
+	// Move AMC animation one frame forward.
+	amc_frame++;
+	if(amc_frame > totalFrameNum) amc_frame = 1;
 }
 
 void Skeleton::doAMCrotation(bone* bone){
 
-	bonerotation b = bone->frames[motionframe];
+	bonerotation b = bone->frames[amc_frame];
 	if(bone->dof == 7){
 		glRotatef(b.rz, 0.0, 0.0, 1.0);
 		glRotatef(b.ry, 0.0, 1.0, 0.0);
@@ -187,7 +189,7 @@ void Skeleton::doAMCrotation(bone* bone){
 //		printf("%s: %f\n", bone->name, b.rx);
 	}
 	else if(bone->dof == 8){
-		glTranslatef(b.tx, b.ty,b.tz);
+		//glTranslatef(b.tx, b.ty,b.tz);
 		glRotatef(b.rz, 0.0, 0.0, 1.0);
 		glRotatef(b.ry, 0.0, 1.0, 0.0);
 		glRotatef(b.rx, 1.0, 0.0, 0.0);
@@ -211,19 +213,51 @@ void Skeleton::drawOnePart(bone* root, GLUquadric* q) {
 			glRotatef(root->roty, 0, 1, 0);
 			glRotatef(root->rotx, 1, 0, 0);
 
+			//
+			// BEGIN: If using AMC file also.
+			//
+			if (amcFileProvided) {
+				doAMCrotation(root);
+
+				glRotatef(-root->rotx, 1, 0, 0);
+				glRotatef(-root->roty, 0, 1, 0);
+				glRotatef(-root->rotz, 0, 0, 1);
+			}
+			//
+			// END: If using AMC file also.
+			//
+
 			glColor3f(0, 1, 1);
 			glutSolidSphere(0.1, 3, 3);
 		glPopMatrix();
 
 
-		glRotatef(root->rotz, 0, 0, 1);
-		glRotatef(root->roty, 0, 1, 0);
-		glRotatef(root->rotx, 1, 0, 0);
+//		glRotatef(root->rotz, 0, 0, 1);
+//		glRotatef(root->roty, 0, 1, 0);
+//		glRotatef(root->rotx, 1, 0, 0);
+//
+//
+//		glRotatef(-root->rotx, 1, 0, 0);
+//		glRotatef(-root->roty, 0, 1, 0);
+//		glRotatef(-root->rotz, 0, 0, 1);
 
+		//
+		// BEGIN: If using AMC file also.
+		//
+		if (amcFileProvided) {
+			glRotatef(root->rotz, 0, 0, 1);
+			glRotatef(root->roty, 0, 1, 0);
+			glRotatef(root->rotx, 1, 0, 0);
 
-		glRotatef(-root->rotx, 1, 0, 0);
-		glRotatef(-root->roty, 0, 1, 0);
-		glRotatef(-root->rotz, 0, 0, 1);
+			doAMCrotation(root);
+
+			glRotatef(-root->rotx, 1, 0, 0);
+			glRotatef(-root->roty, 0, 1, 0);
+			glRotatef(-root->rotz, 0, 0, 1);
+		}
+		//
+		// END: If using AMC file also.
+		//
 
 
 		GLfloat a = 0.0;

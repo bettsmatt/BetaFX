@@ -72,6 +72,7 @@ private:
 	ControlPoint position;
 	float angle;
 	ControlPoint rotAxis;
+	int amc_frame;
 
 	int buffSize, maxBones;
 	void deleteBones(bone*);
@@ -85,9 +86,8 @@ private:
 
 public:
 	int numBones;
-	int motionframe;
-	int amcFileProvided;
-	int currentFrameNumber;
+	bool amcFileProvided;
+	int totalFrameNum;
 	bone* root;
 	Skeleton();
 	~Skeleton();
