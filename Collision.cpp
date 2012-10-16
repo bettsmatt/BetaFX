@@ -14,11 +14,11 @@ Collision::Collision() {}
 Collision::~Collision() {}
 
 bool Collision::checkIfCollidedBalls(Ball* b1, Ball* b2){
-	return (calculateVectorDistance(b1->position, b2->position) < 2);
+	return (calculateVectorDistance(b1->position, b2->position) < (b1->mass + b2->mass));
 }
 
 bool Collision::checkIfCollidedBallParticle(Ball* b, Particle* p){
-	return (calculateVectorDistance(b->position, p->position) < 1.1);
+	return (calculateVectorDistance(b->position, p->position) < b->mass + 0.1f);
 }
 
 float Collision::calculateVectorDistance(float *v1, float* v2)
@@ -115,7 +115,7 @@ void Collision::collisionPlane(double cor, float* ballVel, float* planeNormal){
 	// a . b
 	// ----- * b
 	//  |a|
-	float velocityMag = vectorMagnitude(ballVel);
+	/*float velocityMag = vectorMagnitude(ballVel);
 	float dotProduct = vectorDotProduct(ballVel, planeNormal);
 	float projectionLength = dotProduct / velocityMag;
 
@@ -138,7 +138,48 @@ void Collision::collisionPlane(double cor, float* ballVel, float* planeNormal){
 			ballVel[2] - projectionVector[2]
 	};
 
-	ballVel = finalVelocity;
+	ballVel = finalVelocity;*/
+
+	/*printf("ballVel before: %f %f %f", ballVel[0], ballVel[1], ballVel[2]);
+
+
+	// if we are moving in the direction of the plane (against the normal)...
+	float dotprod = (ballVel[0] * planeNormal[0] + ballVel[1] * planeNormal[1] + ballVel[2] * planeNormal[2]);
+	printf("Dot product: %f", dotprod);
+	if (dotprod < 0.0f)
+	{
+		// Calculate the projection velocity
+		float velocityMag = vectorMagnitude(ballVel);
+		float dotProduct = vectorDotProduct(ballVel, planeNormal);
+		float projectionLength = dotProduct / velocityMag;
+
+		float projectionVector[3] = {
+				planeNormal[0] * projectionLength,
+				planeNormal[1] * projectionLength,
+				planeNormal[2] * projectionLength
+		};
+
+
+		cor += 1;
+		projectionVector[0] *= cor;
+		projectionVector[1] *= cor;
+		projectionVector[2] *= cor;
+
+		ballVel = projectionVector;
+		printf("done");
+		printf("ballVel after: %f %f %f\n", ballVel[0], ballVel[1], ballVel[2]);
+	}*/
+	//Vnew = b * ( -2*(V dot N)*N + V )
+
+	float dotprod = -2 * (ballVel[0] * planeNormal[0] + ballVel[1] * planeNormal[1] + ballVel[2] * planeNormal[2]);
+	float nextVector[3] = {
+			cor * (planeNormal[0] * dotprod + ballVel[0]),
+			cor * (planeNormal[1] * dotprod + ballVel[1]),
+			cor * (planeNormal[2] * dotprod + ballVel[2])
+	};
+	ballVel[0] = nextVector[0];
+	ballVel[1] = nextVector[1];
+	ballVel[2] = nextVector[2];
 }
 
 void Collision::checkCollision(double cor, Cube *c, Ball *b)
@@ -156,21 +197,36 @@ void Collision::checkCollision(double cor, Cube *c, Ball *b)
 		if((b->position[0] > (c->position[0] + c->width/2) && b->velocity[0] < 0) ||
 				(b->position[0] < (c->position[0] - c->width/2) && b->velocity[0] > 0)){
 			//Collision in x direction
-			b->position[0] -= b->velocity[0]; //Move back
-			b->velocity[0] = -b->velocity[0]*cor; //Invert velocity
+			//b->position[0] -= b->velocity[0]; //Move back
+			//b->velocity[0] = -b->velocity[0]*cor; //Invert velocity
+			b->position[1] -= b->velocity[1]; //Move back
+			b->position[0] -= b->velocity[0];
+			b->position[2] -= b->velocity[2];
+			float n[3] = {1, 0, 0};
+			collisionPlane(1, b->velocity, n);
 		}
 		else if((b->position[1] > (c->position[1] + c->height/2) && b->velocity[1] < 0) ||
 				(b->position[1] < (c->position[1] - c->height/2) && b->velocity[1] > 0)){
-			//float n[3] = {0, 1, 0};
-			//collisionPlane(1, b->velocity, n);
+			printf("ballVel before: %f %f %f\n", b->velocity[0], b->velocity[1], b->velocity[2]);
 			//Collision in z direction
 			b->position[1] -= b->velocity[1]; //Move back
-			b->velocity[1] = -b->velocity[1]*cor; //Invert velocity
+			b->position[0] -= b->velocity[0];
+			b->position[2] -= b->velocity[2];
+			float n[3] = {0, 0.5f, 0.5f};
+			collisionPlane(1, b->velocity, n);
+			//b->velocity[1] = -b->velocity[1]*cor; //Invert velocity
+
+			printf("ballVel after: %f %f %f\n", b->velocity[0], b->velocity[1], b->velocity[2]);
 		}
 		else if((b->position[2] > (c->position[2] + c->height/2) && b->velocity[2] < 0) ||
 				(b->position[2] < (c->position[2] - c->height/2) && b->velocity[2] > 0)){
-			b->position[2] -= b->velocity[2]; //Move back
-			b->velocity[2] = -b->velocity[2]*cor; //Invert velocity
+			//b->position[2] -= b->velocity[2]; //Move back
+			//b->velocity[2] = -b->velocity[2]*cor; //Invert velocity
+			b->position[1] -= b->velocity[1]; //Move back
+			b->position[0] -= b->velocity[0];
+			b->position[2] -= b->velocity[2];
+			float n[3] = {0, 0, 1};
+			collisionPlane(1, b->velocity, n);
 		}
 	}
 }

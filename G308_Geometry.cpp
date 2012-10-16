@@ -96,7 +96,7 @@ void G308_Geometry::SetPos(v3* newPosition){
 //-------------------------------------------------------
 // Read in the OBJ (Note: fails quietly, so take care)
 //--------------------------------------------------------
-void G308_Geometry::ReadOBJ(const char *filename) {
+void G308_Geometry::ReadOBJ(char *filename) {
 	FILE* fp;
 	char mode, vmode;
 	char str[200];
@@ -408,9 +408,9 @@ void G308_Geometry::RenderGeometry() {
 
 	glPushMatrix();
 
-	glRotatef(worldRot,0,1,0);
+	//glRotatef(worldRot,0,1,0);
 
-	glTranslated(pos->x,pos->y,pos->z);
+	//glTranslated(pos->x,pos->y,pos->z);
 	/*
 	 * Materials
 	 */
@@ -419,7 +419,7 @@ void G308_Geometry::RenderGeometry() {
 	glMaterialfv(GL_FRONT, GL_DIFFUSE, mat_diffuse);
 	glMaterialfv(GL_FRONT, GL_AMBIENT, mat_ambient);
 
-	if(hasTexture){
+	/*if(hasTexture){
 		glEnable(GL_TEXTURE_2D);
 
 		glBindTexture(GL_TEXTURE_2D, textureID);
@@ -432,7 +432,7 @@ void G308_Geometry::RenderGeometry() {
 
 	if(hasCubemap){
 		EnableCubemap();
-	}
+	}*/
 
 
 	glBegin(GL_TRIANGLES);
@@ -470,7 +470,7 @@ void G308_Geometry::RenderGeometry() {
 
 	glEnd();
 
-	if(hasCubemap){
+	/*if(hasCubemap){
 		DisableCubemap();
 	}
 
@@ -478,7 +478,7 @@ void G308_Geometry::RenderGeometry() {
 		glDisable(GL_TEXTURE_2D);
 		glDisable(GL_TEXTURE_GEN_S);
 		glDisable(GL_TEXTURE_GEN_T);
-	}
+	}*/
 
 
 

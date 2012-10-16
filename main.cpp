@@ -14,6 +14,7 @@
 #include "Collision.h"
 #include "Ball.h"
 #include "Cube.h"
+#include "GJK.h"
 
 #include "Camera.h"
 #include "BSpline.h"
@@ -55,13 +56,15 @@ int maxBalls;
  */
 ParticleEmitter* particeEmitter;
 Collision* collision;
-G308_Geometry** geometry = NULL;
+G308_Geometry* geometry = NULL;
+G308_Geometry* second = NULL;
 Ball** balls = NULL;
 int numGeo, hitCount = 0;
 Camera* camera = NULL;
 BSpline* bspline = NULL;
 Shape* shape = NULL;
 Cube** cubes = NULL;
+float test = 6.0f;
 
 int key_held = 0;
 
@@ -99,6 +102,15 @@ int main(int argc, char** argv) {
 	createBalls();
 	createCubes();
 
+	geometry = new G308_Geometry();
+	geometry->ReadOBJ("cube.obj");
+	geometry->CreateGLPolyGeometry();
+	geometry->CreateGLWireGeometry();
+
+	second = new G308_Geometry();
+	second->ReadOBJ("cube.obj");
+	second->CreateGLPolyGeometry();
+	second->CreateGLWireGeometry();
 
 	loadTexture("sprite2.png", 1);
 
@@ -108,6 +120,8 @@ int main(int argc, char** argv) {
 	bspline = new BSpline();
 	bspline->init();
 	shape = new Shape();
+
+
 
 	G308_init();
 	glutIdleFunc(tick);
@@ -143,8 +157,9 @@ void loadTexture (char* filename, GLuint id){
  * Do stuff, in the background
  */
 void tick (){
-
+	test -= 0.01;
 	Collision* c = new Collision;
+	GJK* gjk = new GJK;
 	/*
 	 * Simulate a frame in the particle emitter
 	 */
@@ -177,6 +192,24 @@ void tick (){
 
 	glutPostRedisplay();
 	free(c);
+
+	G308_Point* geometryPoint = new G308_Point[geometry->m_nNumPoint];
+	for(int i = 0; i < geometry->m_nNumPoint; i++){
+		geometryPoint[i] = G308_Point();
+		geometryPoint[i].x = geometry->m_pVertexArray[i].x + test;
+		geometryPoint[i].y = geometry->m_pVertexArray[i].y;
+		geometryPoint[i].z = geometry->m_pVertexArray[i].z;
+	}
+
+	G308_Point* secondPoint = new G308_Point[second->m_nNumPoint];
+	for(int i = 0; i < second->m_nNumPoint; i++){
+		secondPoint[i] = G308_Point();
+		secondPoint[i].x = second->m_pVertexArray[i].x - 6.0f;
+		secondPoint[i].y = second->m_pVertexArray[i].y;
+		secondPoint[i].z = second->m_pVertexArray[i].z;
+	}
+
+	gjk->shapesIntersect(geometryPoint, secondPoint, geometry->m_nNumPoint, second->m_nNumPoint);
 }
 
 
@@ -228,9 +261,23 @@ void G308_display() {
 	/*
 	 * Draw the particle emmiter and it's particles
 	 */
+	for(int i = 0; i < maxBalls; i ++) balls[i]->renderBall();
+	glPushMatrix();
+	glColor3f(0.0f, 0.5f, 0.5f);
+	glTranslatef(test, 0.0f, 0.0f);
+	geometry->RenderGeometry();
+	glPopMatrix();
+
+	glPushMatrix();
+	glColor3f(0.0f, 0.0f, 0.5f);
+	glTranslatef(-6.0f, 0.0f, 0.0f);
+	second->RenderGeometry();
+	glPopMatrix();
+
 	particeEmitter->renderParticles();
 
-	for(int i = 0; i < maxBalls; i ++) balls[i]->renderBall();
+
+
 	//for(int j = 0; j < 5; j++) cubes[j]->renderCube();
 
 	glPopMatrix();
@@ -429,8 +476,8 @@ void G308_SetLight() {
 	 * Point Light
 	 */
 	GLfloat positionPoint[] = { 0, 0, 0, 1 };
-	float diffusePoint[] = { 1, 1, 1, 1 };
-	float specularPoint[] = { 1, 1, 1, 1 };
+	float diffusePoint[] = { 0.1f, 0.1f, 0.1f, 1 };
+	float specularPoint[] = { 0.1f, 0.1f, 0.1f, 1 };
 	glLightfv(GL_LIGHT0, GL_POSITION, positionPoint);
 	glLightfv(GL_LIGHT0, GL_DIFFUSE, diffusePoint);
 	glLightfv(GL_LIGHT0, GL_SPECULAR, specularPoint);

@@ -6,6 +6,7 @@
  */
 
 #include "GJK.h"
+#include "stdio.h"
 
 GJK::GJK() {
 	// TODO Auto-generated constructor stub
@@ -17,10 +18,10 @@ GJK::~GJK() {
 	// TODO Auto-generated destructor stub
 }
 
-/// <summary>
-/// Given the vertices (in any order) of two convex 3D bodies, calculates whether they intersect
-/// </summary>
-bool GJK::shapesIntersect(G308_Point* shape1, G308_Point* shape2){
+// Given the vertices (in any order) of two convex 3D bodies, calculates whether they intersect
+bool GJK::shapesIntersect(G308_Point* shape1, G308_Point* shape2, int shape1Count, int shape2Count){
+	s1c = shape1Count;
+	s2c = shape2Count;
 	//for initial point, just take the difference between any two vertices (in this case - the first ones)
 	G308_Point initialPoint = G308_Point();
 	initialPoint.x = shape1[0].x - shape2[0].x;
@@ -52,16 +53,10 @@ bool GJK::shapesIntersect(G308_Point* shape1, G308_Point* shape2){
 			return true;
 		}
 	}
-
 	return false;
 }
 
-/// <summary>
-/// Updates the current simplex and the direction in which to look for the origin. Called DoSimplex in the video lecture.
-/// </summary>
-/// <param name="simplex">A list of points in the current simplex. The last point in the list must be the last point added to the simplex</param>
-/// <param name="direction"></param>
-/// <returns></returns>
+// Updates the current simplex and the direction in which to look for the origin. Called DoSimplex in the video lecture.
 bool GJK::updateSimplexAndDirection(G308_Point* simplex, G308_Point direction)
 {
 	//if the simplex is a line
@@ -256,8 +251,8 @@ bool GJK::updateSimplexAndDirection(G308_Point* simplex, G308_Point direction)
 	return false;
 }
 
-/// Finds the farthest point along a given direction of the Minkowski difference of two convex polyhedra.
-/// Called Support in the video lecture: max(D.Ai) - max(-D.Bj)
+// Finds the farthest point along a given direction of the Minkowski difference of two convex polyhedra.
+// Called Support in the video lecture: max(D.Ai) - max(-D.Bj)
 G308_Point GJK::maxPointInMinkDiffAlongDir(G308_Point* shape1, G308_Point* shape2, G308_Point direction)
 {
 	G308_Point negation = G308_Point();
@@ -265,15 +260,18 @@ G308_Point GJK::maxPointInMinkDiffAlongDir(G308_Point* shape1, G308_Point* shape
 	negation.y = -direction.y;
 	negation.z = -direction.z;
 
-	return pointSubtraction(maxPointAlongDirection(shape1, direction), maxPointAlongDirection(shape2, negation));
+	return pointSubtraction(maxPointAlongDirection(shape1, direction, false), maxPointAlongDirection(shape2, negation, true));
 }
 
 // Finds the farthest point along a given direction of a convex polyhedron
-G308_Point GJK::maxPointAlongDirection(G308_Point* shape, G308_Point direction)
+G308_Point GJK::maxPointAlongDirection(G308_Point* shape, G308_Point direction, bool is2)
 {
 	G308_Point max = shape[0];
 
-	for(int i = 0; i < 10000; i++){
+	int size = s1c;
+	if(is2) size = s2c;
+
+	for(int i = 0; i < size; i++){
 		G308_Point point = shape[i];
 		if(pointDotProduct(max, direction) < pointDotProduct(point, direction)) max = point;
 	}
