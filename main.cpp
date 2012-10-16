@@ -602,6 +602,9 @@ void G308_keyboardListener(unsigned char key, int x, int y) {
 	else if(key == '2'){
 		splineOn = !splineOn;
 	}
+	else if(key == '3'){
+		bspline->printCoordinates();
+	}
 }
 
 
