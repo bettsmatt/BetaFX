@@ -103,7 +103,7 @@ int main(int argc, char** argv) {
 	createCubes();
 
 	geometry = new G308_Geometry();
-	geometry->ReadOBJ("cube.obj");
+	geometry->ReadOBJ("teddy.obj");
 	geometry->CreateGLPolyGeometry();
 	geometry->CreateGLWireGeometry();
 
@@ -179,6 +179,21 @@ void tick (){
 		particeEmitter->collideWithBalls(balls[i], c);
 	}
 
+
+	/*
+	 * Rotate the camera for effect
+	 */
+	 /*
+	glMatrixMode(GL_PROJECTION);
+	glLoadIdentity();
+	gluPerspective(G308_FOVY, (double) g_nWinWidth / (double) g_nWinHeight, G308_ZNEAR_3D, G308_ZFAR_3D);
+	glMatrixMode(GL_MODELVIEW);
+	glLoadIdentity();
+
+	float x = sin(camAngle) * 50.0f;
+	float z = cos(camAngle) * 50.0f;
+    */
+
 	for(int i = 0; i < maxBalls; i++){
 		for(int j = 0; j < 5; j++){
 			c->checkCollision(1.0, cubes[j], balls[i]);
@@ -186,8 +201,8 @@ void tick (){
 	}
 
 	if(animate == 1){
-		//camera->lookAt(bspline->nextFrame(), (double)g_nWinWidth, (double)g_nWinHeight);
-		shape->move(bspline->nextFrame());
+			camera->lookAt(bspline, (double)g_nWinWidth, (double)g_nWinHeight);
+			//shape->move(bspline);
 	}
 
 	glutPostRedisplay();
@@ -258,6 +273,7 @@ void G308_display() {
 	// Draw the shape that goes along the spline
 	shape->draw();
 
+
 	/*
 	 * Draw the particle emmiter and it's particles
 	 */
@@ -265,7 +281,8 @@ void G308_display() {
 	glPushMatrix();
 	glColor3f(0.0f, 0.5f, 0.5f);
 	glTranslatef(test, 0.0f, 0.0f);
-	geometry->RenderGeometry();
+	glScalef(0.1f, 0.1f, 0.1f);
+	//geometry->RenderGeometry();
 	glPopMatrix();
 
 	glPushMatrix();
@@ -401,7 +418,7 @@ void G308_keyboardListener(unsigned char key, int x, int y) {
 	}
 
 	if(key == 'e')
-		for(int i = 0 ; i < 50 ; i ++)
+		for(int i = 0 ; i < 100 ; i ++)
 			particeEmitter->emit();
 
 	// b,n,m decide which coordinate of the control point to change.
@@ -445,6 +462,9 @@ void G308_keyboardListener(unsigned char key, int x, int y) {
 		bspline->readNewInterval();
 		glutPostRedisplay();
 	}
+	else if(key == 'c'){
+		bspline->printCoordinates();
+	}
 }
 
 
@@ -469,7 +489,7 @@ void G308_SetLight() {
 	/*
 	 * Ambient
 	 */
-	GLfloat ambientG[] = { 1, 1, 1, 1 };
+	GLfloat ambientG[] = { 1, 1, 1, 0 };
 	glLightModelfv(GL_LIGHT_MODEL_AMBIENT,ambientG);
 
 	/*

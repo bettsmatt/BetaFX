@@ -8,6 +8,7 @@
 #include "Collision.h"
 #include "math.h"
 #include "stdio.h"
+#include "G308_Geometry.h"
 
 Collision::Collision() {}
 
@@ -203,7 +204,7 @@ void Collision::checkCollision(double cor, Cube *c, Ball *b)
 			b->position[0] -= b->velocity[0];
 			b->position[2] -= b->velocity[2];
 			float n[3] = {1, 0, 0};
-			collisionPlane(1, b->velocity, n);
+			collisionPlane(cor, b->velocity, n);
 		}
 		else if((b->position[1] > (c->position[1] + c->height/2) && b->velocity[1] < 0) ||
 				(b->position[1] < (c->position[1] - c->height/2) && b->velocity[1] > 0)){
@@ -212,8 +213,8 @@ void Collision::checkCollision(double cor, Cube *c, Ball *b)
 			b->position[1] -= b->velocity[1]; //Move back
 			b->position[0] -= b->velocity[0];
 			b->position[2] -= b->velocity[2];
-			float n[3] = {0, 0.5f, 0.5f};
-			collisionPlane(1, b->velocity, n);
+			float n[3] = {0, 1, 0};
+			collisionPlane(cor, b->velocity, n);
 			//b->velocity[1] = -b->velocity[1]*cor; //Invert velocity
 
 			printf("ballVel after: %f %f %f\n", b->velocity[0], b->velocity[1], b->velocity[2]);
@@ -226,7 +227,65 @@ void Collision::checkCollision(double cor, Cube *c, Ball *b)
 			b->position[0] -= b->velocity[0];
 			b->position[2] -= b->velocity[2];
 			float n[3] = {0, 0, 1};
-			collisionPlane(1, b->velocity, n);
+			collisionPlane(cor, b->velocity, n);
 		}
 	}
+
+
+
+
+
+/*
+	// Get the center of the sphere relative to the center of the box
+	float* sphereCenterRelBox = Sphere.center - Box.center;
+	// Point on surface of box that is closest to the center of the sphere
+	float* boxPoint = new float[3];
+
+	// Check sphere center against box along the X axis alone.
+	// If the sphere is off past the left edge of the box,
+	// then the left edge is closest to the sphere.
+	// Similar if it's past the right edge. If it's between
+	// the left and right edges, then the sphere's own X
+	// is closest, because that makes the X distance 0,
+	// and you can't get much closer than that :)
+
+	if (sphereCenterRelBox.x < -Box.GetWidth()/2.0)
+	    boxPoint.x = -Box.GetWidth()/2.0;
+	else if (sphereCenterRelBox.x > Box.GetWidth()/2.0)
+	    boxPoint.x = Box.GetWidth()/2.0;
+	else
+	    boxPoint.x = sphereCenterRelBox.x;
+
+	// ...same for Y axis
+	if (sphereCenterRelBox.y < -Box.GetHeight()/2.0)
+	    boxPoint.y = -Box.GetHeight()/2.0;
+	else if (sphereCenterRelBox.y > Box.GetHeight()/2.0)
+	    boxPoint.y = Box.GetHeight()/2.0;
+	else
+	    boxPoint.y = sphereCenterRelBox.y;
+
+	// ... same for Z axis
+	if (sphereCenterRelBox.z < -Box.GetLength()/2.0)
+	    boxPoint.z = -Box.GetLength()/2.0;
+	else if (sphereCenterRelBox.x > Box.GetLength()/2.0)
+	    boxPoint.z = Box.GetLength()/2.0;
+	else
+	    boxPoint.z = sphereCenterRelBox.z;
+
+	// Now we have the closest point on the box, so get the distance from
+	// that to the sphere center, and see if it's less than the radius
+
+	Vec3 dist = sphereCenterRelBox - boxPoint;
+
+	if (dist.x*dist.x + dist.y*dist.y + distz*dist.z < Sphere.radius*Sphere.radius)
+	    return true;
+	else
+	    return false;*/
 }
+
+/*void Collision::checkCollision(double cor, G308_Geometry *g, Ball *b)
+{
+	//x2 + y2 + z2 = r2;
+	G308_Point* points = new G308_Point[6];
+
+}*/

@@ -22,7 +22,7 @@ public:
 	Shape();
 	virtual ~Shape();
 
-	void move(Frame);
+	void move(BSpline*);
 	void draw();
 };
 

@@ -25,6 +25,7 @@ public:
 	void draw(bool pointSelected);
 	void showTime();
 	void unprojectScreenCoord(int x, int y);
+	void normalize();
 
 
 friend ControlPoint operator+(const ControlPoint&, const ControlPoint&);
