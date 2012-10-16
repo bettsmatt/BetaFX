@@ -380,7 +380,7 @@ void G308_Geometry::CreateGLPolyGeometry() {
 
 	glEndList();
 }/
-/*
+
 void G308_Geometry::CreateGLWireGeometry() {
 	if (m_glGeomListWire != 0)
 		glDeleteLists(m_glGeomListWire, 1);

@@ -208,7 +208,7 @@ void Collision::checkCollision(double cor, Cube *c, Ball *b)
 		}
 		else if((b->position[1] > (c->position[1] + c->height/2) && b->velocity[1] < 0) ||
 				(b->position[1] < (c->position[1] - c->height/2) && b->velocity[1] > 0)){
-			printf("ballVel before: %f %f %f\n", b->velocity[0], b->velocity[1], b->velocity[2]);
+			//printf("ballVel before: %f %f %f\n", b->velocity[0], b->velocity[1], b->velocity[2]);
 			//Collision in z direction
 			b->position[1] -= b->velocity[1]; //Move back
 			b->position[0] -= b->velocity[0];
@@ -216,8 +216,6 @@ void Collision::checkCollision(double cor, Cube *c, Ball *b)
 			float n[3] = {0, 1, 0};
 			collisionPlane(cor, b->velocity, n);
 			//b->velocity[1] = -b->velocity[1]*cor; //Invert velocity
-
-			printf("ballVel after: %f %f %f\n", b->velocity[0], b->velocity[1], b->velocity[2]);
 		}
 		else if((b->position[2] > (c->position[2] + c->height/2) && b->velocity[2] < 0) ||
 				(b->position[2] < (c->position[2] - c->height/2) && b->velocity[2] > 0)){

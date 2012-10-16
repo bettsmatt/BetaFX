@@ -155,6 +155,7 @@ void Particle::applyFriction(float friction){
 	for(int i = 0 ; i < 3 ; i++)
 		f[i] = velocity[i] * -friction;
 	applyForce(f);
+	free(f);
 }
 
 void Particle::applyAttractiveForce(Particle* p1, Particle* p2, float strength, float minDist){

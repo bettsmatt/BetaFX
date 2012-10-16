@@ -58,10 +58,6 @@ void BSpline::init(){
 	computeFrames();
 }
 
-int BSpline::getControlPointsNum(){
-	return controlPointsNum;
-}
-
 // This part was done with the help from http://content.gpwiki.org/index.php/OpenGL_Selection_Using_Unique_Color_IDs
 void BSpline::assignColourId() {
 	if (controlPointsNum == 0)
@@ -204,6 +200,10 @@ Frame BSpline::nextFrame(){
 	return p;
 }
 
+void BSpline::resetFrame(){
+	currentFrame = 0;
+}
+
 float BSpline::nextTime(){
 	return (currentFrame - 1) * deltaTime;
 }
@@ -279,6 +279,8 @@ void BSpline::selectPoint(int x, int y){
 	glGetIntegerv(GL_VIEWPORT, viewport); // get color information from frame buffer
 
 	glReadPixels(x, viewport[3] - y, 1, 1, GL_RGB, GL_UNSIGNED_BYTE, pixel);
+
+	printf("pixel: %i %i %i\n", pixel[0], pixel[1], pixel[2]);
 	for (int i = 0; i < controlPointsNum; i++) {
 		if((controlPoints[i].r == pixel[0]) && (controlPoints[i].g == pixel[1]) && (controlPoints[i].b) == pixel[2]){
 			pointSelected = i;
