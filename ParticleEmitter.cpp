@@ -162,7 +162,7 @@ void ParticleEmitter::tick(){
 
 			if(gravityOn)
 				for(int j = 0 ; j < numGravity ; j ++)
-					particles[i]->applyAttractiveForce(particles[i], gravity[j], 0.2f, 100);
+					Particle::applyAttractiveForce(particles[i], gravity[j], 0.2f, 100);
 
 			particles[i]->tick(); // Simulate
 
@@ -172,7 +172,7 @@ void ParticleEmitter::tick(){
 	for(int i = 0 ; i < numGravity ; i ++){
 		for(int j = 0 ; j < numGravity ; j ++){
 			if(i != j)
-				gravity[i]->applyAttractiveForce(gravity[i], gravity[j], 0.002f, 1000);
+				Particle::applyAttractiveForce(gravity[i], gravity[j], 0.002f, 1000);
 		}
 	}
 
@@ -312,9 +312,9 @@ void ParticleEmitter::collideWithBalls(Ball* ball, Collision* c){
 			else{
 				float *ballVelocity = new float[3];
 				float *ballPosition = new float[3];
-				for(int i = 0; i < 3; i++){
-					ballVelocity[i] = ball->velocity[i];
-					ballPosition[i] = ball->position[i];
+				for(int j = 0; j < 3; j++){
+					ballVelocity[j] = ball->velocity[j];
+					ballPosition[j] = ball->position[j];
 				}
 
 				c->collisionBall(1, 100, 0.001, 1, 0.1, ballPosition, particles[i]->position, ballVelocity, particles[i]->velocity);

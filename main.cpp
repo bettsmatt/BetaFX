@@ -235,7 +235,7 @@ void tick (){
 	}
 
 	glutPostRedisplay();
-	free(c);
+	delete c;
 
 	G308_Point* geometryPoint = new G308_Point[geometry->m_nNumPoint];
 	for(int i = 0; i < geometry->m_nNumPoint; i++){
@@ -253,7 +253,7 @@ void tick (){
 		secondPoint[i].z = second->m_pVertexArray[i].z;
 	}
 
-	gjk->shapesIntersect(geometryPoint, secondPoint, geometry->m_nNumPoint, second->m_nNumPoint);
+	//gjk->shapesIntersect(geometryPoint, secondPoint, geometry->m_nNumPoint, second->m_nNumPoint);
 }
 
 
@@ -578,8 +578,9 @@ void G308_SetLight() {
 }
 
 void createBalls(){
-	balls = new Ball*[maxBalls];
 	maxBalls = 5;
+	balls = new Ball*[maxBalls];
+
 	for(int i = 0; i < maxBalls; i++){
 		if(i == 0){
 			float v[3] = {-0.1f, 0.1f, 0.0f};

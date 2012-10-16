@@ -10,4 +10,4 @@ all:
 	
 clean :
 	rm -rf *.o
-	rm TextureDemo
+	rm BetaFX

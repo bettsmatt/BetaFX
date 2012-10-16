@@ -16,7 +16,11 @@
 
 
 Camera::Camera() {
-	zoom, rotx, roty, tx, ty = 0.0f;
+	zoom = 0.0f;
+	rotx = 0.0f;
+	roty = 0.0f;
+	tx = 0.0f;
+	ty = 0.0f;
 	ref = new RefFrame();
 	count = 0;
 }
