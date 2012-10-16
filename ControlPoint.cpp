@@ -53,7 +53,7 @@ void ControlPoint::add(ControlPoint p){
 	z += p.z;
 }
 
-void ControlPoint::draw(bool pointSelected){
+void ControlPoint::draw(bool pointSelected, GLenum mode){
 	glPushMatrix();
 		glColor3f(r / 255.0f, g / 255.0f, b / 255.0f);
 		if (pointSelected) {

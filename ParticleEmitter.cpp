@@ -171,6 +171,7 @@ void ParticleEmitter::cloud(int num, float radius){
 			v[j] = 0;
 			p[j] = 0 + sin((float)rand()/((float)RAND_MAX/(PI*2-0))) * (float)rand()/((float)RAND_MAX/(radius-0));
 		}
+
 		create(p,v,1.0f);
 
 	}
@@ -182,7 +183,7 @@ void ParticleEmitter::create(float* p, float * v, float m){
 	if(index >= MAX_PARTICLES)
 		index = 0;
 
-	delete particles[index];
+	//delete particles[index];
 
 	particles[index] = new Particle(p,v, 1, camera,true);
 
@@ -269,7 +270,7 @@ void ParticleEmitter::tick(){
 		// Alive!
 		if(!particles[i]->isDead()){
 
-			particles[i]->applyFriction(0.01f);
+			particles[i]->applyFriction(0.0001f);
 
 			if(gravityOn)
 				for(int j = 0 ; j < numGravity ; j ++)
@@ -385,6 +386,9 @@ void ParticleEmitter::renderParticles() {
 			pq.push(*particles[i]);
 		}
 	}
+	for(int i = 0; i < numGravity ; i ++)
+		pq.push(*gravity[i]);
+
 
 	// Rotate to face vector, might take this out
 
@@ -396,29 +400,18 @@ void ParticleEmitter::renderParticles() {
 	);
 
 	glutWireCone(1,1,3,3);
-
+	glDepthMask(0);
 	glPopMatrix();
 	glPushMatrix();
 
 	/*
 	 * All particles have the same texture, so we do this here.
 	 */
-	glEnable(GL_TEXTURE_2D);
-	//glDepthMask(0);
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	glEnable(GL_POINT_SPRITE_ARB);
 
-	glBindTexture(GL_TEXTURE_2D, 1);
-	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-
-
+	/*
 	for(int i = 0; i < numGravity ; i ++)
 		gravity[i]->renderParticle();
-
+*/
 	int size = pq.size();
 	for(int i = 0 ; i < size ; i ++){
 		Particle p = pq.top();
@@ -438,7 +431,7 @@ void ParticleEmitter::renderParticles() {
 	glDisable(GL_BLEND);
 	glDisable(GL_POINT_SPRITE_ARB);
 	glDisable(GL_TEXTURE_2D);
-	//glDepthMask(1);
+	glDepthMask(1);
 
 
 
@@ -466,5 +459,4 @@ void ParticleEmitter::collideWithBalls(Ball* ball, Collision* c){
 			}
 		}
 	}
-
 }

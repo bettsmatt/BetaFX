@@ -34,13 +34,13 @@ private:
 	bool dies;
 
 	float** trail;
-	int trailIndex;
 
 
 public:
 
 
 	Particle(float*, float*, float, G308_Point*, bool);
+	~Particle();
 	int lifeSpanLeft;
 	float* position; // x, y, z
 	float* velocity; // x, y, z

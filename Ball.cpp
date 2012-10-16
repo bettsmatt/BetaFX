@@ -29,14 +29,11 @@ Ball::Ball(float* initialPosition, float* initialVelocity, bool sp) {
 	isSpecial = sp;
 
 	// Set initial velocity
-	for(int i = 0 ; i < 3 ; i ++)
+	for(int i = 0 ; i < 3 ; i ++){
 		velocity[i] = initialVelocity[i];
-
-	for(int i = 0 ; i < 3 ; i ++)
 		position[i] = initialPosition[i];
-
-	for(int i = 0 ; i < 3 ; i ++)
 		acceletation[i] = 0;
+	}
 
 	mass = 1; // Default
 
