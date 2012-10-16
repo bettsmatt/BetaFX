@@ -64,6 +64,7 @@ float camAngle;
 float camHeight;
 int animate = 0;
 int maxBalls;
+int currentBalls;
 
 /*
  * Particle Emitter
@@ -125,7 +126,7 @@ int main(int argc, char** argv) {
 	createCubes();
 
 	geometry = new G308_Geometry();
-	geometry->ReadOBJ("teddy.obj");
+	geometry->ReadOBJ("cube.obj");
 	geometry->CreateGLPolyGeometry();
 	geometry->CreateGLWireGeometry();
 
@@ -194,6 +195,7 @@ void loadTexture (char* filename, GLuint id){
 
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, t->width, t->height, 0, GL_RGBA,
 			GL_UNSIGNED_BYTE, t->textureData);
+	free(t);
 }
 
 /*
@@ -207,22 +209,21 @@ void tick (){
 	 * Simulate a frame in the particle emitter
 	 */
 	particeEmitter->tick();
-	//particeEmitter->emit();
-	for(int i = 0; i < maxBalls; i ++){
+	for(int i = 0; i < currentBalls; i ++){
 		balls[i]->tick();
 	}
-	for(int i = 0; i < maxBalls; i++){
-		for(int j = i+1; j < maxBalls; j++){
+	for(int i = 0; i < currentBalls; i++){
+		for(int j = i+1; j < currentBalls; j++){
 			if(i != j && c->checkIfCollidedBalls(balls[i], balls[j])){
 				c->collisionBall(1, balls[i]->mass, balls[j]->mass, 2, 2, balls[i]->position, balls[j]->position, balls[i]->velocity, balls[j]->velocity);
 			}
 		}
 	}
-	for(int i = 0; i < maxBalls; i++){
+	for(int i = 0; i < currentBalls; i++){
 		particeEmitter->collideWithBalls(balls[i], c);
 	}
 
-	for(int i = 0; i < maxBalls; i++){
+	for(int i = 0; i < currentBalls; i++){
 		for(int j = 0; j < 5; j++){
 			c->checkCollision(1.0, cubes[j], balls[i]);
 		}
@@ -271,7 +272,10 @@ void tick (){
 		secondPoint[i].z = second->m_pVertexArray[i].z;
 	}
 
-	//gjk->shapesIntersect(geometryPoint, secondPoint, geometry->m_nNumPoint, second->m_nNumPoint);
+	gjk->shapesIntersect(geometryPoint, secondPoint, geometry->m_nNumPoint, second->m_nNumPoint);
+	delete gjk;
+	delete geometryPoint;
+	delete secondPoint;
 }
 
 
@@ -339,12 +343,12 @@ void G308_display() {
 	/*
 	 * Draw the particle emmiter and it's particles
 	 */
-	for(int i = 0; i < maxBalls; i ++) balls[i]->renderBall();
+	for(int i = 0; i < currentBalls; i ++) balls[i]->renderBall();
 	glPushMatrix();
 	glColor3f(0.0f, 0.5f, 0.5f);
 	glTranslatef(test, 0.0f, 0.0f);
-	glScalef(0.1f, 0.1f, 0.1f);
-	//geometry->RenderGeometry();
+	glRotatef(45, 0, 0, 1);
+	geometry->RenderGeometry();
 	glPopMatrix();
 
 	glPushMatrix();
@@ -503,6 +507,7 @@ void G308_keyboardListener(unsigned char key, int x, int y) {
 		wind[0] = 0.1f;
 		particeEmitter->applyWind(wind);
 
+
 	}
 	 */
 	if(key == 'g'){
@@ -556,9 +561,7 @@ void G308_keyboardListener(unsigned char key, int x, int y) {
 		bspline->readNewInterval();
 		glutPostRedisplay();
 	}
-//	else if(key == 'c'){
-//		bspline->printCoordinates();
-//	}
+
 	//
 	// Move camera back to its original position.
 	else if (key == 'v') {
@@ -573,6 +576,32 @@ void G308_keyboardListener(unsigned char key, int x, int y) {
 	}
 	else if(key == '9'){
 		camera->zoom += 1;
+	}
+
+	else if(key == '-' || key == '='){
+		float XHI = 0.1f;
+		float XLO = -0.1f;
+
+		float YHI = 0.1f;
+		float YLO = -0.1f;
+
+		float ZHI = 0.3f;
+		float ZLO = 0.2f;
+
+		float* v = new float[3];
+		v[0] = XLO + (float)rand()/((float)RAND_MAX/(XHI-XLO));
+		v[1] = YLO + (float)rand()/((float)RAND_MAX/(YHI-YLO));
+		v[2] = ZLO + (float)rand()/((float)RAND_MAX/(ZHI-ZLO));
+
+		if(currentBalls == maxBalls) return;
+		//float v[3] = {0.00f, 0.00f, 0.0f};
+		float p[3] = {0.0f, 6.0f, 0.0f};
+		bool special = true;
+		if(key == '-') special = false;
+
+		balls[currentBalls] = new Ball(p, v, special);
+		currentBalls ++;
+		printf("Good");
 	}
 	else if(key == '1'){
 		lightsOn = !lightsOn;
@@ -674,6 +703,8 @@ void createBalls(){
 			balls[i] = new Ball(p, v, true);
 		}
 	}
+	maxBalls = 20;
+	currentBalls = 5;
 }
 
 void createCubes(){

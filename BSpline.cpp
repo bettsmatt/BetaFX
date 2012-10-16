@@ -39,7 +39,7 @@ BSpline::~BSpline() {
 }
 
 void BSpline::init(){
-	n = 3; // Degree of the curve
+	n = 3; // Degree of the curtestve
 	pointSelected = -1;
 	frames = NULL;
 	deltaTime = 0.01f;

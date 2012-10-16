@@ -171,6 +171,8 @@ void ParticleEmitter::cloud(int num, float radius){
 			v[j] = 0;
 			p[j] = 0 + sin((float)rand()/((float)RAND_MAX/(PI*2-0))) * (float)rand()/((float)RAND_MAX/(radius-0));
 		}
+
+		printf("At %f, %f, %f\n", p[0], p[1], p[2]);
 		create(p,v,1.0f);
 
 	}
