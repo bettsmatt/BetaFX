@@ -20,6 +20,8 @@
 #include <stdlib.h>
 #include <math.h>
 
+#define TRAILMAX 10
+
 Particle::Particle(float* pos, float* initialVelocity, float m, G308_Point* cam, bool d) {
 
 	position = new float[3];
@@ -30,7 +32,6 @@ Particle::Particle(float* pos, float* initialVelocity, float m, G308_Point* cam,
 		acceletation[i] = 0;
 		position[i] = 0;
 		velocity[i] = 0;
-
 		position[i] = pos[i];
 		velocity[i] = initialVelocity[i];
 	}
@@ -48,9 +49,31 @@ Particle::Particle(float* pos, float* initialVelocity, float m, G308_Point* cam,
 	camera = cam;
 	dies = d;
 
+
+	trail = (float**) malloc(sizeof(float*) * TRAILMAX);
+
+	for (int i = 0 ; i < TRAILMAX ; i ++){
+		trail[i] = new float[3];
+		trail[i][0] = pos[0];
+		trail[i][1] = pos[1];
+		trail[i][2] = pos[2];
+	}
+
 }
 
+Particle::~Particle(){
+	//delete position;
+	//delete velocity;
+	//delete acceletation;
 
+	/*
+	for (int i = 0 ; i < TRAILMAX ; i ++){
+		free(trail[i]);
+	}*/
+
+	//free(trail);
+
+}
 bool Particle::isDead(){
 
 	// Particle's timer has run down
@@ -81,6 +104,17 @@ void Particle::tick (){
 	if(dies){
 		lifeSpanLeft--;
 	}
+
+	for(int i = TRAILMAX - 1 ; i > 0 ; i --){
+		trail[i][0] = trail[i - 1][0];
+		trail[i][1] = trail[i - 1][1];
+		trail[i][2] = trail[i - 1][2];
+	}
+
+	trail[0][0] = position[0];
+	trail[0][1] = position[1];
+	trail[0][2] = position[2];
+
 }
 
 /*
@@ -92,7 +126,7 @@ float Particle::Dist(){
 			(position[0] * position[0]) - (camera->x * camera->x) +
 			(position[1] * position[1]) - (camera->y * camera->y) +
 			(position[2] * position[2]) - (camera->z * camera->z)
-   );
+	);
 }
 
 void Particle::RenderMe(){
@@ -103,12 +137,33 @@ void Particle::renderParticle() {
 
 	glPushMatrix();
 
-	// Fade color from red to blue over time
-	glColor3f(
-			(float)lifeSpanLeft / (float)lifeSpan,
-			0,
-			1 - ((float)lifeSpanLeft / (float)lifeSpan)
-	);
+	glEnable(GL_TEXTURE_2D);
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glEnable(GL_POINT_SPRITE_ARB);
+
+	glBindTexture(GL_TEXTURE_2D, 1);
+	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+
+
+// SUN
+	if(!dies){
+		glColor3f(
+				0,
+				1,
+				0
+		);
+	}	// Fade color from red to blue over time
+	else{
+		glColor3f(
+				(float)lifeSpanLeft / (float)lifeSpan,
+				0,
+				1 - ((float)lifeSpanLeft / (float)lifeSpan)
+		);
+	}
 
 	// Translate to where the particle is
 	glTranslatef(
@@ -139,8 +194,10 @@ void Particle::renderParticle() {
 	glLoadMatrixf(modelview);
 
 
+	float size = 0.3f;
 
-	float size = 0.1f;
+	if(!dies)
+		size = 1;
 
 	// Draw Quad
 	glBegin(GL_QUADS);
@@ -158,8 +215,32 @@ void Particle::renderParticle() {
 	glEnd();
 
 
+	glPopMatrix();
+
+	glDisable(GL_BLEND);
+	glDisable(GL_POINT_SPRITE_ARB);
+	glDisable(GL_TEXTURE_2D);
+
+	glPushMatrix();
+	glBegin(GL_LINE);
+
+	for(int i = 0 ; i < TRAILMAX - 1 ; i ++){
+
+		glVertex3f(
+				trail[i][0],
+				trail[i][1],
+				trail[i][2]
+		);
+
+		glVertex3f(
+				trail[i + 1][0],
+				trail[i + 1][1],
+				trail[i + 1][2]
+		);
 
 
+	}
+	glEnd();
 	glPopMatrix();
 
 }
