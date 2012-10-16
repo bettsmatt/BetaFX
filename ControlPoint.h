@@ -8,6 +8,8 @@
 #ifndef CONTROLPOINT_H_
 #define CONTROLPOINT_H_
 
+#include <GL/glut.h>
+
 class ControlPoint {
 public:
 	float x,y,z;
@@ -22,7 +24,7 @@ public:
 	void setColourID(float rr, float gg, float bb);
 	void multiplyScalar(float);
 	void add(ControlPoint p);
-	void draw(bool pointSelected);
+	void draw(bool pointSelected, GLenum mode);
 	void showTime();
 	void unprojectScreenCoord(int x, int y);
 	void normalize();

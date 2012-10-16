@@ -34,6 +34,7 @@ enum MENU_TYPE {
 // Assign a default value
 MENU_TYPE menu_choice = SIMPLE;
 bool choiceChanged = false;
+bool lightsOn = true;
 
 GLuint g_mainWnd;
 GLuint g_nWinWidth = G308_WIN_WIDTH;
@@ -218,6 +219,10 @@ void tick (){
 	//
 	// If animation is on, move the object one step.
 	if(animate == 1){
+		if(choiceChanged){
+			choiceChanged = false;
+			bspline->resetFrame();
+		}
 		switch(menu_choice){
 		case SIMPLE:
 			shape->move(bspline);
@@ -229,6 +234,7 @@ void tick (){
 			camera->lookAt(bspline, 2, (double)g_nWinWidth, (double)g_nWinHeight, &cameraPos);
 			break;
 		case SKELETON:
+			if (skeleton != NULL) skeleton->move(bspline);
 			break;
 		}
 
@@ -297,7 +303,7 @@ void G308_display() {
 
 
 	// Draw the spline with the control points
-	bspline->draw();
+	bspline->draw(GL_SELECT);
 
 	// Draw the shape that goes along the spline if animation is moving.
 	if(animate == 1){
@@ -397,8 +403,13 @@ void mouse (int b, int s, int x, int y){
 	// This one is for selecting a control point and changing its position.
 	if(b == GLUT_LEFT_BUTTON && s == GLUT_DOWN
 			&& (key_held == MOVE_ALONG_X || key_held == MOVE_ALONG_Y || key_held == MOVE_ALONG_Z)){
+
+		glDisable(GL_LIGHT0);
+		glDisable(GL_LIGHT1);
 		bspline->selectPoint(x, y);
 		buttons[0] = ((GLUT_DOWN == s) ? 1 : 0);
+		glEnable(GL_LIGHT0);
+		glEnable(GL_LIGHT1);
 	}
 	// Remember that left button is pressed.
 	else if(b == GLUT_LEFT_BUTTON){
@@ -415,7 +426,7 @@ void mouse (int b, int s, int x, int y){
 // Menu items
 void menu(int item) {
 	menu_choice = (MENU_TYPE)item; // CAMERA_ORIGIN, CAMERA_TANGENT, SIMPLE, or SKELETON
-	printf("Choice changed\n");
+	choiceChanged = true;
 	glutPostRedisplay();
 }
 
@@ -528,7 +539,17 @@ void G308_keyboardListener(unsigned char key, int x, int y) {
 	else if(key == '9'){
 		camera->zoom += 1;
 	}
-
+	else if(key == '1'){
+		lightsOn = !lightsOn;
+		if(lightsOn){
+			glEnable(GL_LIGHT0);
+			glEnable(GL_LIGHT1);
+		}
+		else{
+			glDisable(GL_LIGHT0);
+			glDisable(GL_LIGHT1);
+		}
+	}
 }
 
 

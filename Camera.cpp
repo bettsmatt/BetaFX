@@ -80,15 +80,14 @@ void Camera::lookAt(BSpline* bs, int m, double winWidth, double winHeight, G308_
 	pos->y = f.ctrlPoint.y;
 	pos->z = f.ctrlPoint.z;
 
+	ref->N = ref->N + f.ctrlPoint;
+	ref->B = ref->B + f.ctrlPoint;
+
 	if (f.isLast == 1) {
 		if(m == 1) gluLookAt(f.ctrlPoint.x, f.ctrlPoint.y, f.ctrlPoint.z, 0, 0, 0, ref->B.x, ref->B.y,ref->B.z);
 		else if(m == 2) gluLookAt(f.ctrlPoint.x, f.ctrlPoint.y, f.ctrlPoint.z, ref->T.x, ref->T.y, ref->T.z, ref->B.x, ref->B.y,ref->B.z);
 	}
 	else{
-		ref->N = ref->N + f.ctrlPoint;
-		ref->B = ref->B + f.ctrlPoint;
-
-		//printf("%i\nt: %f %f %f\tB: %f %f %f\n", count++, ref->T.x, ref->T.y, ref->T.z, ref->B.x, ref->B.y,ref->B.z);
 		if(m == 1) gluLookAt(f.ctrlPoint.x, f.ctrlPoint.y, f.ctrlPoint.z, 0, 0, 0, ref->B.x, ref->B.y,ref->B.z);
 		else if(m == 2) gluLookAt(f.ctrlPoint.x, f.ctrlPoint.y, f.ctrlPoint.z, ref->T.x, ref->T.y, ref->T.z, ref->B.x, ref->B.y,ref->B.z);
 	}

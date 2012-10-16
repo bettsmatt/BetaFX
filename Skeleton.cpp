@@ -33,6 +33,8 @@ Skeleton::Skeleton() {
 	currentFrameNumber = 0;
 	buffSize = 200;
 	maxBones = 60;
+	angle = 0;
+	rotAxis = ControlPoint();
 	root = (bone*) malloc(sizeof(bone) * maxBones);
 
 	for (int i = 0; i < 60; i++) {
@@ -133,8 +135,11 @@ void Skeleton::drawParts(bone* root, GLUquadric* q) {
 }
 
 void Skeleton::move(BSpline* bs){
+	printf("Move\n");
 	Frame f = bs->nextFrame();
+	printf("f: %f %f %f\n", f.ctrlPoint.x, f.ctrlPoint.y, f.ctrlPoint.z);
 	position = f.ctrlPoint;
+	printf("position: %f %f %f\n", position.x, position.y, position.z);
 	ControlPoint zVector = ControlPoint(0, 0, 1);
 	//f.tangent.normalize();
 
@@ -142,6 +147,7 @@ void Skeleton::move(BSpline* bs){
 	angle = dotProduct(zVector, f.tangent);
 	angle = acos(angle);
 	angle = angle * (180.0 / 3.1416);
+	printf("a: %f\t axis: %f %f %f\n", angle, rotAxis.x, rotAxis.y, rotAxis.z);
 }
 
 void Skeleton::doAMCrotation(bone* bone){
@@ -206,7 +212,7 @@ void Skeleton::drawOnePart(bone* root, GLUquadric* q) {
 			glRotatef(root->rotx, 1, 0, 0);
 
 			glColor3f(0, 1, 1);
-			glutSolidSphere(0.1, 100, 100);
+			glutSolidSphere(0.1, 3, 3);
 		glPopMatrix();
 
 
@@ -220,7 +226,7 @@ void Skeleton::drawOnePart(bone* root, GLUquadric* q) {
 		glRotatef(-root->rotz, 0, 0, 1);
 
 
-		GLfloat angle = 0.0;
+		GLfloat a = 0.0;
 		glPushMatrix();
 			// Find rotation vector normal.
 			G308_Point v1 = { 0, 0, 1 };
@@ -228,10 +234,10 @@ void Skeleton::drawOnePart(bone* root, GLUquadric* q) {
 			G308_Point normal = { 0, 0, 0 };
 			calculateCrossProduct(v1, v2, &normal);
 			// Find angle of rotation from bone's direction (in degrees).
-			angle = calculateDotProduct(v1, v2);
+			a = calculateDotProduct(v1, v2);
 			glColor3f(1, 1, 1);
-			glRotatef(angle, normal.x, normal.y, normal.z);
-			gluCylinder(q, 0.05, 0.05, root->length, 10, 10);
+			glRotatef(a, normal.x, normal.y, normal.z);
+			gluCylinder(q, 0.05, 0.05, root->length, 3, 3);
 		glPopMatrix();
 
 
