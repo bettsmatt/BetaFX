@@ -33,6 +33,9 @@ private:
 	G308_Point* camera;
 	bool dies;
 
+	float** trail;
+	int trailIndex;
+
 
 public:
 

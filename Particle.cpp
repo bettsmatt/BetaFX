@@ -20,6 +20,8 @@
 #include <stdlib.h>
 #include <math.h>
 
+#define TRAILMAX 10
+
 Particle::Particle(float* pos, float* initialVelocity, float m, G308_Point* cam, bool d) {
 
 	position = new float[3];
@@ -31,7 +33,7 @@ Particle::Particle(float* pos, float* initialVelocity, float m, G308_Point* cam,
 		position[i] = 0;
 		velocity[i] = 0;
 
-				;
+		;
 		position[i] = pos[i];
 		velocity[i] = initialVelocity[i];
 	}
@@ -48,6 +50,18 @@ Particle::Particle(float* pos, float* initialVelocity, float m, G308_Point* cam,
 
 	camera = cam;
 	dies = d;
+
+
+	trail = (float**) malloc(sizeof(float*) * TRAILMAX);
+	for (int i = 0 ; i < TRAILMAX ; i ++){
+		trail[i] = new float[3];
+		trail[i][0] = pos[0];
+		trail[i][1] = pos[1];
+		trail[i][2] = pos[2];
+	}
+
+	trailIndex = 0;
+
 
 }
 
@@ -82,6 +96,14 @@ void Particle::tick (){
 	if(dies){
 		lifeSpanLeft--;
 	}
+
+	trail[trailIndex][0] = position[0];
+	trail[trailIndex][1] = position[1];
+	trail[trailIndex][2] = position[2];
+
+	trailIndex ++;
+	if(trailIndex == TRAILMAX)
+		trailIndex = 0;
 }
 
 /*
@@ -93,7 +115,7 @@ float Particle::Dist(){
 			(position[0] * position[0]) - (camera->x * camera->x) +
 			(position[1] * position[1]) - (camera->y * camera->y) +
 			(position[2] * position[2]) - (camera->z * camera->z)
-   );
+	);
 }
 
 void Particle::RenderMe(){
@@ -145,22 +167,44 @@ void Particle::renderParticle() {
 
 	// Draw Quad
 	glBegin(GL_QUADS);
-		glTexCoord2f(0, 1);
-		glVertex3f(-1 * size, 1 * size, 0.0f);
+	glTexCoord2f(0, 1);
+	glVertex3f(-1 * size, 1 * size, 0.0f);
 
-		glTexCoord2f(1, 1);
-		glVertex3f( 1 * size, 1 * size, 0.0f);
+	glTexCoord2f(1, 1);
+	glVertex3f( 1 * size, 1 * size, 0.0f);
 
-		glTexCoord2f(1, 0);
-		glVertex3f( 1 * size,-1 * size, 0.0f);
+	glTexCoord2f(1, 0);
+	glVertex3f( 1 * size,-1 * size, 0.0f);
 
-		glTexCoord2f(0,0);
-		glVertex3f(-1 * size,-1 * size, 0.0f);
+	glTexCoord2f(0,0);
+	glVertex3f(-1 * size,-1 * size, 0.0f);
 	glEnd();
 
 
 
 
+
+
+	glPopMatrix();
+
+	glPushMatrix();
+	glBegin(GL_LINE_STRIP);
+	for(int i = 0 ; i < TRAILMAX ; i ++){
+		glVertex3f(
+				trail[i][0],
+				trail[i][1],
+				trail[i][2]
+		);
+
+
+		printf("Trail %f %f %f \n",
+				trail[i][0],
+				trail[i][1],
+				trail[i][2]
+		);
+
+	}
+	glEnd();
 	glPopMatrix();
 
 }
