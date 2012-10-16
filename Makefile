@@ -1,7 +1,7 @@
 CC = g++
 LPATH = -L/usr/pkg/lib
 LDPATH = -Wl,-R/usr/pkg/lib 
-CFLAGS=-g -Wall
+CFLAGS=-g -Wall -Wextra -pedantic
 LIBS=-lGL -lglut -lGLU -ljpeg -lpng15 -lm
 IPATH= -I/usr/pkg/include
 

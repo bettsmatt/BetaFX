@@ -62,6 +62,7 @@ float camAngle;
 float camHeight;
 int animate = 0;
 int maxBalls;
+int currentBalls;
 
 /*
  * Particle Emitter
@@ -121,7 +122,7 @@ int main(int argc, char** argv) {
 	createCubes();
 
 	geometry = new G308_Geometry();
-	geometry->ReadOBJ("teddy.obj");
+	geometry->ReadOBJ("cube.obj");
 	geometry->CreateGLPolyGeometry();
 	geometry->CreateGLWireGeometry();
 
@@ -181,6 +182,7 @@ void loadTexture (char* filename, GLuint id){
 
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, t->width, t->height, 0, GL_RGBA,
 			GL_UNSIGNED_BYTE, t->textureData);
+	free(t);
 }
 
 /*
@@ -195,21 +197,21 @@ void tick (){
 	 */
 	particeEmitter->tick();
 	particeEmitter->emit();
-	for(int i = 0; i < maxBalls; i ++){
+	for(int i = 0; i < currentBalls; i ++){
 		balls[i]->tick();
 	}
-	for(int i = 0; i < maxBalls; i++){
-		for(int j = i+1; j < maxBalls; j++){
+	for(int i = 0; i < currentBalls; i++){
+		for(int j = i+1; j < currentBalls; j++){
 			if(i != j && c->checkIfCollidedBalls(balls[i], balls[j])){
 				c->collisionBall(1, balls[i]->mass, balls[j]->mass, 2, 2, balls[i]->position, balls[j]->position, balls[i]->velocity, balls[j]->velocity);
 			}
 		}
 	}
-	for(int i = 0; i < maxBalls; i++){
+	for(int i = 0; i < currentBalls; i++){
 		particeEmitter->collideWithBalls(balls[i], c);
 	}
 
-	for(int i = 0; i < maxBalls; i++){
+	for(int i = 0; i < currentBalls; i++){
 		for(int j = 0; j < 5; j++){
 			c->checkCollision(1.0, cubes[j], balls[i]);
 		}
@@ -253,7 +255,10 @@ void tick (){
 		secondPoint[i].z = second->m_pVertexArray[i].z;
 	}
 
-	//gjk->shapesIntersect(geometryPoint, secondPoint, geometry->m_nNumPoint, second->m_nNumPoint);
+	gjk->shapesIntersect(geometryPoint, secondPoint, geometry->m_nNumPoint, second->m_nNumPoint);
+	delete gjk;
+	delete geometryPoint;
+	delete secondPoint;
 }
 
 
@@ -321,12 +326,12 @@ void G308_display() {
 	/*
 	 * Draw the particle emmiter and it's particles
 	 */
-	for(int i = 0; i < maxBalls; i ++) balls[i]->renderBall();
+	for(int i = 0; i < currentBalls; i ++) balls[i]->renderBall();
 	glPushMatrix();
 	glColor3f(0.0f, 0.5f, 0.5f);
 	glTranslatef(test, 0.0f, 0.0f);
-	glScalef(0.1f, 0.1f, 0.1f);
-	//geometry->RenderGeometry();
+	glRotatef(45, 0, 0, 1);
+	geometry->RenderGeometry();
 	glPopMatrix();
 
 	glPushMatrix();
@@ -528,7 +533,19 @@ void G308_keyboardListener(unsigned char key, int x, int y) {
 	else if(key == '9'){
 		camera->zoom += 1;
 	}
-
+	else if(key == '0'){
+		double AOD;
+		  srand((unsigned)time(NULL));
+		  AOD=((double) rand() / (RAND_MAX+1)) ;
+		  printf("AOD: %f", AOD);
+		if(currentBalls == maxBalls) return;
+		float v[3] = {-0.1f, 0.1f, 0.0f};
+		//float v[3] = {0.00f, 0.00f, 0.0f};
+		float p[3] = {3.0f, 0.0f, 1.0f};
+		balls[currentBalls] = new Ball(p, v, false);
+		currentBalls ++;
+		printf("Good");
+	}
 }
 
 
@@ -618,6 +635,8 @@ void createBalls(){
 			balls[i] = new Ball(p, v, true);
 		}
 	}
+	maxBalls = 20;
+	currentBalls = 5;
 }
 
 void createCubes(){

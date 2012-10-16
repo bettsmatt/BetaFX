@@ -219,6 +219,9 @@ void Collision::checkCollision(double cor, Cube *c, Ball *b)
 
 	if (dist[0]*dist[0] + dist[1]*dist[1] + dist[2]*dist[2] < b->mass*b->mass)
 		printf("True\n");
+	delete[] sphereCenterRelBox;
+	delete[] boxPoint;
+	delete[] dist;
 }
 
 /*void Collision::checkCollision(double cor, G308_Geometry *g, Ball *b)

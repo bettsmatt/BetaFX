@@ -33,6 +33,12 @@ Particle::Particle(float* initialVelocity) {
 
 	mass = 1; // Default
 
+
+	for(int i = 0 ; i < 3 ; i ++){
+		velocity[i] = initialVelocity[i];
+		position[i] = 0;
+		acceletation[i] = 0;
+	}
 	/*
 	 * Lifespan
 	 */
@@ -125,17 +131,17 @@ void Particle::renderParticle() {
 
 	// Draw Quad
 	glBegin(GL_QUADS);
-		glTexCoord2f(0, 1);
-		glVertex3f(-1 * size, 1 * size, 0.0f);
+	glTexCoord2f(0, 1);
+	glVertex3f(-1 * size, 1 * size, 0.0f);
 
-		glTexCoord2f(1, 1);
-		glVertex3f( 1 * size, 1 * size, 0.0f);
+	glTexCoord2f(1, 1);
+	glVertex3f( 1 * size, 1 * size, 0.0f);
 
-		glTexCoord2f(1, 0);
-		glVertex3f( 1 * size,-1 * size, 0.0f);
+	glTexCoord2f(1, 0);
+	glVertex3f( 1 * size,-1 * size, 0.0f);
 
-		glTexCoord2f(0,0);
-		glVertex3f(-1 * size,-1 * size, 0.0f);
+	glTexCoord2f(0,0);
+	glVertex3f(-1 * size,-1 * size, 0.0f);
 	glEnd();
 
 
@@ -155,7 +161,7 @@ void Particle::applyFriction(float friction){
 	for(int i = 0 ; i < 3 ; i++)
 		f[i] = velocity[i] * -friction;
 	applyForce(f);
-	free(f);
+	delete[] f;
 }
 
 void Particle::applyAttractiveForce(Particle* p1, Particle* p2, float strength, float minDist){
@@ -163,15 +169,13 @@ void Particle::applyAttractiveForce(Particle* p1, Particle* p2, float strength, 
 	float* vec = (float*) malloc (sizeof(float) * 3);
 
 	// Vector between particles
-	for(int i = 0 ; i < 3 ; i ++)
+	for(int i = 0 ; i < 3 ; i ++){
+		vec[i] = 0;
 		vec[i] = p2->position[i] - p1->position[i];
+	}
 
 	// Distance
-	float dist = sqrt(
-			vec[0] * vec[0] +
-			vec[1] * vec[1] +
-			vec[2] * vec[2]
-	);
+	float dist = sqrt(vec[0] * vec[0] +	vec[1] * vec[1] +  vec[2] * vec[2]);
 
 	// Close enough
 	if(dist < minDist){
@@ -195,6 +199,7 @@ void Particle::applyAttractiveForce(Particle* p1, Particle* p2, float strength, 
 		// Apply to p2
 		p2->applyForce(vecN);
 		 */
+		delete[] vecN;
 	}
 
 	free(vec);
