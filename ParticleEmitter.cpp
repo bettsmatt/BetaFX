@@ -269,30 +269,30 @@ void ParticleEmitter::tick(){
 		// Alive!
 		if(!particles[i]->isDead()){
 
-			//particles[i]->applyFriction(0.01f);
+			particles[i]->applyFriction(0.01f);
 
 			if(gravityOn)
 				for(int j = 0 ; j < numGravity ; j ++)
-					Particle::applyAttractiveForce(particles[i], gravity[j], 0.01f, 1000);
+					particles[i]->applyAttractiveForce(particles[i], gravity[j], 0.01f, 1000);
 
 			particles[i]->tick(); // Simulate
 
 		}
+	}
 
-		if(gravityOn){
-			for(int i = 0 ; i < numGravity ; i ++){
-				for(int j = 0 ; j < numGravity ; j ++){
-					if(i != j ){
-						Particle::applyAttractiveForce(gravity[i], gravity[j], 0.001f, 1000);
-					}
+	if(gravityOn){
+		for(int i = 0 ; i < numGravity ; i ++){
+			for(int j = 0 ; j < numGravity ; j ++){
+				if(i != j ){
+					gravity[i]->applyAttractiveForce(gravity[i], gravity[j], 0.001f, 1000);
 				}
-
-
-				for(int i = 0 ; i < numGravity ; i ++){
-					gravity[i]->tick();
-				}
-
 			}
+
+
+			for(int i = 0 ; i < numGravity ; i ++){
+				gravity[i]->tick();
+			}
+
 		}
 	}
 }
@@ -416,6 +416,9 @@ void ParticleEmitter::renderParticles() {
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 
 
+	for(int i = 0; i < numGravity ; i ++)
+		gravity[i]->renderParticle();
+
 	int size = pq.size();
 	for(int i = 0 ; i < size ; i ++){
 		Particle p = pq.top();
@@ -436,14 +439,15 @@ void ParticleEmitter::renderParticles() {
 	glDisable(GL_POINT_SPRITE_ARB);
 	glDisable(GL_TEXTURE_2D);
 	//glDepthMask(1);
-	for(int i = 0; i < numGravity ; i ++)
-		gravity[i]->renderParticle();
+
+
 
 
 	glPopMatrix();
 }
 
 void ParticleEmitter::collideWithBalls(Ball* ball, Collision* c){
+
 	for(int i = 0; i < MAX_PARTICLES && i < created ; i ++){
 		if(c->checkIfCollidedBallParticle(ball, particles[i])){
 			if(ball->isSpecial){
@@ -462,4 +466,5 @@ void ParticleEmitter::collideWithBalls(Ball* ball, Collision* c){
 			}
 		}
 	}
+
 }
