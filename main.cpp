@@ -533,16 +533,28 @@ void G308_keyboardListener(unsigned char key, int x, int y) {
 	else if(key == '9'){
 		camera->zoom += 1;
 	}
-	else if(key == '0'){
-		double AOD;
-		  srand((unsigned)time(NULL));
-		  AOD=((double) rand() / (RAND_MAX+1)) ;
-		  printf("AOD: %f", AOD);
+	else if(key == '-' || key == '='){
+		float XHI = 0.1f;
+		float XLO = -0.1f;
+
+		float YHI = 0.1f;
+		float YLO = -0.1f;
+
+		float ZHI = 0.3f;
+		float ZLO = 0.2f;
+
+		float* v = new float[3];
+		v[0] = XLO + (float)rand()/((float)RAND_MAX/(XHI-XLO));
+		v[1] = YLO + (float)rand()/((float)RAND_MAX/(YHI-YLO));
+		v[2] = ZLO + (float)rand()/((float)RAND_MAX/(ZHI-ZLO));
+
 		if(currentBalls == maxBalls) return;
-		float v[3] = {-0.1f, 0.1f, 0.0f};
 		//float v[3] = {0.00f, 0.00f, 0.0f};
-		float p[3] = {3.0f, 0.0f, 1.0f};
-		balls[currentBalls] = new Ball(p, v, false);
+		float p[3] = {0.0f, 6.0f, 0.0f};
+		bool special = true;
+		if(key == '-') special = false;
+
+		balls[currentBalls] = new Ball(p, v, special);
 		currentBalls ++;
 		printf("Good");
 	}

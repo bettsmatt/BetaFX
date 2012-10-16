@@ -170,7 +170,7 @@ void Collision::checkCollision(double cor, Cube *c, Ball *b)
 
 
 
-
+	/*
 	// Get the center of the sphere relative to the center of the box
 	float* sphereCenterRelBox = new float[3];//Sphere.center - Box.center;
 	sphereCenterRelBox[0] = b->position[0] - c->position[0];
@@ -217,8 +217,21 @@ void Collision::checkCollision(double cor, Cube *c, Ball *b)
 	dist[1] = sphereCenterRelBox[1] - boxPoint[1];
 	dist[2] = sphereCenterRelBox[2] - boxPoint[2];
 
-	if (dist[0]*dist[0] + dist[1]*dist[1] + dist[2]*dist[2] < b->mass*b->mass)
+	if (dist[0]*dist[0] + dist[1]*dist[1] + dist[2]*dist[2] < b->mass*b->mass){
 		printf("True\n");
+
+		float* test = new float[3];
+		test[1] = b->position[1] - b->velocity[1]; //Move back
+		test[0] = b->position[0] - b->velocity[0];
+		test[2] = b->position[2] - b->velocity[2];
+
+
+
+
+
+	}*/
+
+
 	delete[] sphereCenterRelBox;
 	delete[] boxPoint;
 	delete[] dist;
