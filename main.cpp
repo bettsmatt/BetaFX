@@ -32,6 +32,7 @@ enum MENU_TYPE {
 
 // Assign a default value
 MENU_TYPE menu_choice = SIMPLE;
+bool choiceChanged = false;
 
 GLuint g_mainWnd;
 GLuint g_nWinWidth = G308_WIN_WIDTH;
@@ -370,7 +371,7 @@ void mouse (int b, int s, int x, int y){
 // Menu items
 void menu(int item) {
 	menu_choice = (MENU_TYPE)item; // CAMERA_ORIGIN, CAMERA_TANGENT, SIMPLE, or SKELETON
-
+	printf("Choice changed\n");
 	glutPostRedisplay();
 }
 
