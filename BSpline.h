@@ -60,7 +60,7 @@ public:
 	void printArray(float* a, int size);
 	void assignColourId();
 
-	void draw();
+	void draw(GLenum mode);
 
 	void selectPoint(int x, int y);
 	void deselectPoint();

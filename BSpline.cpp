@@ -80,8 +80,8 @@ void BSpline::assignColourId() {
 //****************************************************************************
 // DRAWING
 //****************************************************************************
-void BSpline::draw(){
-	drawControlPoints(GL_RENDER);
+void BSpline::draw(GLenum mode){
+	drawControlPoints(mode);
 	drawCurve();
 }
 
@@ -108,8 +108,7 @@ void BSpline::drawControlPoints(GLenum mode) {
 	}
 	// draw the control points
 	for (int i = 0; i < controlPointsNum; i++) {
-		//printf("i, pointSelected, point[i]: %i %i %f %f %f\n", i, pointSelected, controlPoints[i].x, controlPoints[i].y, controlPoints[i].z);
-		controlPoints[i].draw(pointSelected == i);
+		controlPoints[i].draw(pointSelected == i, mode);
 		if(infoDisplay) controlPoints[i].showTime();
 	}
 
@@ -273,7 +272,7 @@ void BSpline::selectPoint(int x, int y){
 	glDisable(GL_FOG);
 	glDisable(GL_LIGHTING);
 
-	drawControlPoints(GL_SELECT);
+	draw(GL_SELECT);
 
 	GLint viewport[4];
 	unsigned char pixel[3];
@@ -281,13 +280,13 @@ void BSpline::selectPoint(int x, int y){
 
 	glReadPixels(x, viewport[3] - y, 1, 1, GL_RGB, GL_UNSIGNED_BYTE, pixel);
 
-	printf("pixel: %i %i %i\n", pixel[0], pixel[1], pixel[2]);
 	for (int i = 0; i < controlPointsNum; i++) {
 		if((controlPoints[i].r == pixel[0]) && (controlPoints[i].g == pixel[1]) && (controlPoints[i].b) == pixel[2]){
 			pointSelected = i;
 			break;
 		}
 	}
+
 	glutPostRedisplay();
 }
 
