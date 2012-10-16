@@ -19,26 +19,27 @@
 
 #include "define.h"
 #include <GL/glut.h>
-#include <queue>
+#include "Render.h"
+#include "Camera.h"
 
 class Particle
 {
 private:
 
 
-
 	float* acceletation; // x, y, z
 	float mass;
-
 	int lifeSpan;
+	Camera* camera;
 
 
 public:
+
 	int lifeSpanLeft;
 	float* position; // x, y, z
 	float* velocity; // x, y, z
-	Particle(float*); // Initial velocity
-	~Particle(void);
+
+	void init(float*, float*, float, Camera*); // position, velocity, mass
 
 	void tick(); // Simulate one frame
 	bool isDead(); // Particle has expired
@@ -50,6 +51,9 @@ public:
 
 	void setPosition (float*); // Set the position
 
+	void RenderMe();
+	void SetDist(float*);
+	float Dist();
 
 
 };

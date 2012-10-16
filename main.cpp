@@ -87,7 +87,7 @@ int main(int argc, char** argv) {
 	glutDisplayFunc(G308_display);
 	glutReshapeFunc(G308_Reshape);
 
-	particeEmitter = new ParticleEmitter();
+	particeEmitter = new ParticleEmitter(camera);
 	float* v = new float[3];
 	v[0] = 0;
 	v[1] = 1;
@@ -149,7 +149,7 @@ void tick (){
 	 * Simulate a frame in the particle emitter
 	 */
 	particeEmitter->tick();
-	particeEmitter->emit();
+	//particeEmitter->emit();
 	for(int i = 0; i < maxBalls; i ++){
 		balls[i]->tick();
 	}
@@ -333,6 +333,12 @@ void G308_keyboardListener(unsigned char key, int x, int y) {
 	float* wind = new float [3];
 	wind[0] = 0; wind[1] = 0; wind[2] = 0;
 
+	if(key == 'c')
+	{
+		particeEmitter->cloud(1000,10);
+	}
+
+	/*
 	if(key == 'i')
 	{
 		wind[1] = 0.1f;
@@ -360,7 +366,7 @@ void G308_keyboardListener(unsigned char key, int x, int y) {
 		particeEmitter->applyWind(wind);
 
 	}
-
+	 */
 	if(key == 'g'){
 		if(particeEmitter->isGravityOn())
 			particeEmitter->turnGravityOff();

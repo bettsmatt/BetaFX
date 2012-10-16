@@ -22,6 +22,7 @@
 #include "Particle.h"
 #include "Ball.h"
 #include "Collision.h"
+#include <vector>
 
 class ParticleEmitter
 {
@@ -42,6 +43,11 @@ private:
 	Particle** gravity;
 	bool gravityOn;
 
+	void create(float*, float*, float);
+
+	Camera* camera;
+
+
 public:
 
 	float* getPosition(); // Get the world coordinates
@@ -57,6 +63,7 @@ public:
 	void tick(); // Run a single frame of simulation
 
 	void emit(); // Emit a particle
+	void cloud(int , float); // Make a cloud
 
 	void applyWind(float*); // Apply a force to all the particles
 
@@ -65,7 +72,7 @@ public:
 	void turnGravityOff();
 	bool isGravityOn();
 
-	ParticleEmitter(void); // Defaults
+	ParticleEmitter(Camera*); // Defaults
 	ParticleEmitter(char*); // Load from *.pec file
 	~ParticleEmitter(void);
 

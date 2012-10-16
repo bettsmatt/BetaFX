@@ -20,18 +20,19 @@
 #include <stdlib.h>
 #include <math.h>
 
-Particle::Particle(float* initialVelocity) {
+void Particle::init(float* pos, float* initialVelocity, float m, Camera* cam) {
 
-	// Zero
 	position = new float[3];
 	velocity = new float[3];
 	acceletation = new float[3];
 
-	// Set initial velocity
-	for(int i = 0 ; i < 3 ; i ++)
-		velocity[i] = initialVelocity[i];
 
-	mass = 1; // Default
+	for (int i = 0 ; i < 3 ; i ++){
+		position[i] = pos[i];
+		velocity[i] = initialVelocity[i];
+	}
+
+	mass = m; // Default
 
 	/*
 	 * Lifespan
@@ -40,12 +41,8 @@ Particle::Particle(float* initialVelocity) {
 	float LO = 18000;
 	lifeSpanLeft = lifeSpan = LO + (float)rand()/((float)RAND_MAX/(HI-LO));
 
-}
+	camera = cam;
 
-Particle::~Particle(void) {
-	free(position);
-	free(velocity);
-	free(acceletation);
 }
 
 
@@ -78,6 +75,18 @@ void Particle::tick (){
 
 	lifeSpanLeft--;
 
+}
+
+float Particle::Dist(){
+	return sqrt(
+			(position[0] * position[0]) - (camera->rotx * camera->rotx) +
+			(position[1] * position[1]) - (camera->rotx * camera->rotx) +
+			(position[2] * position[2]) - (camera->rotx * camera->rotx)
+   );
+}
+
+void Particle::RenderMe(){
+	renderParticle();
 }
 
 void Particle::renderParticle() {
