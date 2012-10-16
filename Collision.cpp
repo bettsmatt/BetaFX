@@ -229,12 +229,12 @@ void Collision::checkCollision(double cor, Cube *c, Ball *b)
 
 
 
-	}*/
+	}
 
 
 	delete[] sphereCenterRelBox;
 	delete[] boxPoint;
-	delete[] dist;
+	delete[] dist;*/
 }
 
 /*void Collision::checkCollision(double cor, G308_Geometry *g, Ball *b)

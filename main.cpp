@@ -28,8 +28,9 @@
 
 // Menu items
 enum MENU_TYPE {
-	CAMERA_ORIGIN, CAMERA_TANGENT, SIMPLE, SKELETON
+	CAMERA_ORIGIN, CAMERA_TANGENT, SIMPLE, SKELETON, REMOVE_PARTICLES, REMOVE_SUNS, SPAWN_SUN, SPAWN_SUNS
 };
+
 
 // Assign a default value
 MENU_TYPE menu_choice = SIMPLE;
@@ -107,9 +108,11 @@ int main(int argc, char** argv) {
 	glutDisplayFunc(G308_display);
 	glutReshapeFunc(G308_Reshape);
 
+
+	particeEmitter = new ParticleEmitter(&cameraPos);
+
 	G308_init();
 
-	particeEmitter = new ParticleEmitter();
 	float* v = new float[3];
 	v[0] = 0;
 	v[1] = 1;
@@ -151,6 +154,11 @@ int main(int argc, char** argv) {
 	glutAddMenuEntry("Camera - origin", CAMERA_ORIGIN);
 	glutAddMenuEntry("Camera - tangent", CAMERA_TANGENT);
 	glutAddMenuEntry("Skeleton", SKELETON);
+
+	glutAddMenuEntry("Remove Particles", REMOVE_PARTICLES);
+	glutAddMenuEntry("Remove Suns", REMOVE_SUNS);
+	glutAddMenuEntry("Spawn Suns", SPAWN_SUNS);
+	glutAddMenuEntry("Spawn Sun", SPAWN_SUN);
 
 	glutAttachMenu(GLUT_RIGHT_BUTTON);
 
@@ -196,7 +204,6 @@ void tick (){
 	 * Simulate a frame in the particle emitter
 	 */
 	particeEmitter->tick();
-	particeEmitter->emit();
 	for(int i = 0; i < currentBalls; i ++){
 		balls[i]->tick();
 	}
@@ -420,7 +427,24 @@ void mouse (int b, int s, int x, int y){
 // Menu items
 void menu(int item) {
 	menu_choice = (MENU_TYPE)item; // CAMERA_ORIGIN, CAMERA_TANGENT, SIMPLE, or SKELETON
+
+	switch(item){
+		case REMOVE_PARTICLES:
+			particeEmitter->removeParticles();
+			break;
+		case REMOVE_SUNS:
+			particeEmitter->removeSuns();
+			break;
+		case SPAWN_SUN:
+			particeEmitter->spawnSun();
+			break;
+		case SPAWN_SUNS:
+			particeEmitter->spawnSuns();
+			break;
+	}
+
 	printf("Choice changed\n");
+
 	glutPostRedisplay();
 }
 
@@ -436,20 +460,27 @@ void G308_keyboardListener(unsigned char key, int x, int y) {
 	float* wind = new float [3];
 	wind[0] = 0; wind[1] = 0; wind[2] = 0;
 
+	// Spawn a cloud of particles
+	if(key == 'c')
+	{
+		particeEmitter->cloud(1000,10);
+	}
+
+	// Remove all suns from the emitter
 	if(key == 'i')
 	{
-		wind[1] = 0.1f;
-		particeEmitter->applyWind(wind);
+		particeEmitter->removeSuns();
 
 	}
 
+	// Remove all particles from th emitter
 	if(key == 'k')
 	{
-		wind[1] = -0.1f;
-		particeEmitter->applyWind(wind);
+		particeEmitter->removeParticles();
 
 	}
 
+	/*
 	if(key == 'j')
 	{
 		wind[0] = -0.1f;
@@ -463,7 +494,7 @@ void G308_keyboardListener(unsigned char key, int x, int y) {
 		particeEmitter->applyWind(wind);
 
 	}
-
+	 */
 	if(key == 'g'){
 		if(particeEmitter->isGravityOn())
 			particeEmitter->turnGravityOff();
@@ -472,7 +503,7 @@ void G308_keyboardListener(unsigned char key, int x, int y) {
 	}
 
 	if(key == 'e')
-		for(int i = 0 ; i < 100 ; i ++)
+		for(int i = 0 ; i < 1 ; i ++)
 			particeEmitter->emit();
 
 
@@ -515,9 +546,9 @@ void G308_keyboardListener(unsigned char key, int x, int y) {
 		bspline->readNewInterval();
 		glutPostRedisplay();
 	}
-	else if(key == 'c'){
-		bspline->printCoordinates();
-	}
+	//else if(key == 'c'){
+	//	bspline->printCoordinates();
+	//}
 	//
 	// Move camera back to its original position.
 	else if (key == 'v') {
@@ -533,7 +564,7 @@ void G308_keyboardListener(unsigned char key, int x, int y) {
 	else if(key == '9'){
 		camera->zoom += 1;
 	}
-	else if(key == '-' || key == '='){
+	/*else if(key == '-' || key == '='){
 		float XHI = 0.1f;
 		float XLO = -0.1f;
 
@@ -557,7 +588,7 @@ void G308_keyboardListener(unsigned char key, int x, int y) {
 		balls[currentBalls] = new Ball(p, v, special);
 		currentBalls ++;
 		printf("Good");
-	}
+	}*/
 }
 
 

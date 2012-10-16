@@ -22,13 +22,14 @@
 #include "Particle.h"
 #include "Ball.h"
 #include "Collision.h"
+#include <vector>
 
 class ParticleEmitter
 {
 private:
 
 	float* position; // x, y, z
-	float* vector; // x, y, z
+	float* vec; // x, y, z
 	float* orientation; // Angle, x, y, z
 
 	bool on;
@@ -41,6 +42,11 @@ private:
 	int numGravity;
 	Particle** gravity;
 	bool gravityOn;
+
+	void create(float*, float*, float);
+
+	G308_Point* camera;
+
 
 public:
 
@@ -57,6 +63,7 @@ public:
 	void tick(); // Run a single frame of simulation
 
 	void emit(); // Emit a particle
+	void cloud(int , float); // Make a cloud
 
 	void applyWind(float*); // Apply a force to all the particles
 
@@ -65,7 +72,7 @@ public:
 	void turnGravityOff();
 	bool isGravityOn();
 
-	ParticleEmitter(void); // Defaults
+	ParticleEmitter(G308_Point*); // Defaults
 	ParticleEmitter(char*); // Load from *.pec file
 	~ParticleEmitter(void);
 
@@ -73,4 +80,11 @@ public:
 	void toggleRenderMode();	// Toggle between wire frame, solid and textured
 
 	void collideWithBalls(Ball*, Collision*);
+
+	void removeParticles(); // Remove all particles from the scene
+	void removeSuns(); // remove all suns from the emmitter
+
+	void spawnSuns(); // Spawn 3 suns
+	void spawnSun(); // Spawn single sun
+
 };

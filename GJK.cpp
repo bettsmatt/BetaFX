@@ -42,7 +42,7 @@ bool GJK::shapesIntersect(G308_Point* shape1, G308_Point* shape2, int shape1Coun
 		G308_Point A = maxPointInMinkDiffAlongDir(shape1, shape2, D);
 		if (pointDotProduct(A, D) < 0)
 		{
-			printf("Miss\n");
+			//printf("Miss\n");
 			return false;
 		}
 
@@ -51,7 +51,7 @@ bool GJK::shapesIntersect(G308_Point* shape1, G308_Point* shape2, int shape1Coun
 
 		if (updateSimplexAndDirection(simplex, D))
 		{
-			printf("Hit\n");
+			//printf("Hit\n");
 			return true;
 		}
 	}
