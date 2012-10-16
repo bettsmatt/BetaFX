@@ -62,9 +62,6 @@ void Collision::collisionBall(double cor, double mass1, double mass2, double rad
 	float sp = sin(phi2);
 	float cp = cos(phi2);
 
-	//	printf("st: %f\n", st);
-	//	printf("ct: %f\n", ct);
-
 	// Express the velocity vector of ball 1 in a rotated coordinate
 	// System where ball 2 lies on the z-axis
 	float vx1r = ct * cp * vel1[0] + ct * sp * vel1[1] - st * vel1[2];
@@ -112,66 +109,6 @@ void Collision::collisionBall(double cor, double mass1, double mass2, double rad
 }
 
 void Collision::collisionPlane(double cor, float* ballVel, float* planeNormal){
-	//Project the spheres velocity on the planes normal
-	// a . b
-	// ----- * b
-	//  |a|
-	/*float velocityMag = vectorMagnitude(ballVel);
-	float dotProduct = vectorDotProduct(ballVel, planeNormal);
-	float projectionLength = dotProduct / velocityMag;
-
-	float projectionVector[3] = {
-			planeNormal[0] * projectionLength,
-			planeNormal[1] * projectionLength,
-			planeNormal[2] * projectionLength
-	};
-
-	//multiply the projection by 2
-	cor += 1;
-	projectionVector[0] *= cor;
-	projectionVector[1] *= cor;
-	projectionVector[2] *= cor;
-
-	//subtract it from the spheres velocity
-	float finalVelocity[3] = {
-			ballVel[0] - projectionVector[0],
-			ballVel[1] - projectionVector[1],
-			ballVel[2] - projectionVector[2]
-	};
-
-	ballVel = finalVelocity;*/
-
-	/*printf("ballVel before: %f %f %f", ballVel[0], ballVel[1], ballVel[2]);
-
-
-	// if we are moving in the direction of the plane (against the normal)...
-	float dotprod = (ballVel[0] * planeNormal[0] + ballVel[1] * planeNormal[1] + ballVel[2] * planeNormal[2]);
-	printf("Dot product: %f", dotprod);
-	if (dotprod < 0.0f)
-	{
-		// Calculate the projection velocity
-		float velocityMag = vectorMagnitude(ballVel);
-		float dotProduct = vectorDotProduct(ballVel, planeNormal);
-		float projectionLength = dotProduct / velocityMag;
-
-		float projectionVector[3] = {
-				planeNormal[0] * projectionLength,
-				planeNormal[1] * projectionLength,
-				planeNormal[2] * projectionLength
-		};
-
-
-		cor += 1;
-		projectionVector[0] *= cor;
-		projectionVector[1] *= cor;
-		projectionVector[2] *= cor;
-
-		ballVel = projectionVector;
-		printf("done");
-		printf("ballVel after: %f %f %f\n", ballVel[0], ballVel[1], ballVel[2]);
-	}*/
-	//Vnew = b * ( -2*(V dot N)*N + V )
-
 	float dotprod = -2 * (ballVel[0] * planeNormal[0] + ballVel[1] * planeNormal[1] + ballVel[2] * planeNormal[2]);
 	float nextVector[3] = {
 			cor * (planeNormal[0] * dotprod + ballVel[0]),
@@ -233,9 +170,13 @@ void Collision::checkCollision(double cor, Cube *c, Ball *b)
 
 
 
-/*
+
 	// Get the center of the sphere relative to the center of the box
-	float* sphereCenterRelBox = Sphere.center - Box.center;
+	float* sphereCenterRelBox = new float[3];//Sphere.center - Box.center;
+	sphereCenterRelBox[0] = b->position[0] - c->position[0];
+	sphereCenterRelBox[1] = b->position[1] - c->position[1];
+	sphereCenterRelBox[2] = b->position[2] - c->position[2];
+
 	// Point on surface of box that is closest to the center of the sphere
 	float* boxPoint = new float[3];
 
@@ -246,39 +187,38 @@ void Collision::checkCollision(double cor, Cube *c, Ball *b)
 	// the left and right edges, then the sphere's own X
 	// is closest, because that makes the X distance 0,
 	// and you can't get much closer than that :)
-
-	if (sphereCenterRelBox.x < -Box.GetWidth()/2.0)
-	    boxPoint.x = -Box.GetWidth()/2.0;
-	else if (sphereCenterRelBox.x > Box.GetWidth()/2.0)
-	    boxPoint.x = Box.GetWidth()/2.0;
+	if (sphereCenterRelBox[0] < c->width/2.0)
+		boxPoint[0] = -c->width/2.0;
+	else if (sphereCenterRelBox[0] > c->width/2.0)
+		boxPoint[0] = c->width/2.0;
 	else
-	    boxPoint.x = sphereCenterRelBox.x;
+		boxPoint[0] = sphereCenterRelBox[0];
 
 	// ...same for Y axis
-	if (sphereCenterRelBox.y < -Box.GetHeight()/2.0)
-	    boxPoint.y = -Box.GetHeight()/2.0;
-	else if (sphereCenterRelBox.y > Box.GetHeight()/2.0)
-	    boxPoint.y = Box.GetHeight()/2.0;
+	if (sphereCenterRelBox[1] < -c->width/2.0)
+		boxPoint[1] = -c->width/2.0;
+	else if (sphereCenterRelBox[1] > c->width/2.0)
+		boxPoint[1] = c->width/2.0;
 	else
-	    boxPoint.y = sphereCenterRelBox.y;
+		boxPoint[1] = sphereCenterRelBox[1];
 
 	// ... same for Z axis
-	if (sphereCenterRelBox.z < -Box.GetLength()/2.0)
-	    boxPoint.z = -Box.GetLength()/2.0;
-	else if (sphereCenterRelBox.x > Box.GetLength()/2.0)
-	    boxPoint.z = Box.GetLength()/2.0;
+	if (sphereCenterRelBox[2] < -c->width/2.0)
+		boxPoint[2] = -c->width/2.0;
+	else if (sphereCenterRelBox[2] > c->width/2.0)
+		boxPoint[2] =  c->width/2.0;
 	else
-	    boxPoint.z = sphereCenterRelBox.z;
+		boxPoint[2] = sphereCenterRelBox[2];
 
 	// Now we have the closest point on the box, so get the distance from
 	// that to the sphere center, and see if it's less than the radius
+	float* dist = new float[3];//Sphere.center - Box.center;
+	dist[0] = sphereCenterRelBox[0] - boxPoint[0];
+	dist[1] = sphereCenterRelBox[1] - boxPoint[1];
+	dist[2] = sphereCenterRelBox[2] - boxPoint[2];
 
-	Vec3 dist = sphereCenterRelBox - boxPoint;
-
-	if (dist.x*dist.x + dist.y*dist.y + distz*dist.z < Sphere.radius*Sphere.radius)
-	    return true;
-	else
-	    return false;*/
+	if (dist[0]*dist[0] + dist[1]*dist[1] + dist[2]*dist[2] < b->mass*b->mass)
+		printf("True\n");
 }
 
 /*void Collision::checkCollision(double cor, G308_Geometry *g, Ball *b)
