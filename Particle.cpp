@@ -20,32 +20,35 @@
 #include <stdlib.h>
 #include <math.h>
 
-Particle::Particle(float* initialVelocity) {
+Particle::Particle(float* pos, float* initialVelocity, float m, G308_Point* cam, bool d) {
 
-	// Zero
 	position = new float[3];
 	velocity = new float[3];
 	acceletation = new float[3];
 
-	// Set initial velocity
-	for(int i = 0 ; i < 3 ; i ++)
-		velocity[i] = initialVelocity[i];
+	for (int i = 0 ; i < 3 ; i ++){
+		acceletation[i] = 0;
+		position[i] = 0;
+		velocity[i] = 0;
 
-	mass = 1; // Default
+				;
+		position[i] = pos[i];
+		velocity[i] = initialVelocity[i];
+	}
+
+	mass = m; // Default
 
 	/*
-	 * Lifespan
+	 * Life span
 	 */
-	float HI = 20000;
-	float LO = 18000;
+	float HI = 2000;
+	float LO = 1500;
+
 	lifeSpanLeft = lifeSpan = LO + (float)rand()/((float)RAND_MAX/(HI-LO));
 
-}
+	camera = cam;
+	dies = d;
 
-Particle::~Particle(void) {
-	free(position);
-	free(velocity);
-	free(acceletation);
 }
 
 
@@ -76,8 +79,25 @@ void Particle::tick (){
 		acceletation[i] = 0;
 	}
 
-	lifeSpanLeft--;
+	if(dies){
+		lifeSpanLeft--;
+	}
+}
 
+/*
+ * Order based on dist from the camera
+ */
+float Particle::Dist(){
+
+	return sqrt(
+			(position[0] * position[0]) - (camera->x * camera->x) +
+			(position[1] * position[1]) - (camera->y * camera->y) +
+			(position[2] * position[2]) - (camera->z * camera->z)
+   );
+}
+
+void Particle::RenderMe(){
+	renderParticle();
 }
 
 void Particle::renderParticle() {
