@@ -56,12 +56,8 @@ public:
 	BSpline(ControlPoint* points, int num);
 	virtual ~BSpline();
 
-	int getControlPointsNum();
-
 	void init();
-
 	void printArray(float* a, int size);
-
 	void assignColourId();
 
 	void draw();
@@ -73,6 +69,7 @@ public:
 	void addPoint(float x, float y, float z);
 
 	Frame nextFrame();
+	void resetFrame();
 	float nextTime();
 
 	void recalculate();
