@@ -36,11 +36,13 @@ private:
 
 public:
 
+
+	Particle(float*, float*, float, G308_Point*, bool);
 	int lifeSpanLeft;
 	float* position; // x, y, z
 	float* velocity; // x, y, z
 
-	void init(float*, float*, float, G308_Point*, bool); // position, velocity, mass, camera, dies
+	//void init(float*, float*, float, G308_Point*, bool); // position, velocity, mass, camera, dies
 
 	void tick(); // Simulate one frame
 	bool isDead(); // Particle has expired

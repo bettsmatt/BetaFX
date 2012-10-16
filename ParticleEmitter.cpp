@@ -24,7 +24,7 @@
 #include <vector>
 
 #define PI 3.14159265359f
-#define MAX_PARTICLES 10000
+#define MAX_PARTICLES 1000
 
 using namespace std;
 
@@ -34,9 +34,6 @@ ParticleEmitter::ParticleEmitter(G308_Point* c) {
 	orientation = new float[4];
 	position = new float[3];
 	vec = new float[3];
-
-	vector <Particle> particleVector;
-
 
 	particles = (Particle**) malloc (sizeof(Particle*) * MAX_PARTICLES);
 
@@ -73,7 +70,7 @@ void ParticleEmitter::removeParticles(){
 
 }
 void ParticleEmitter::spawnSuns(){
-
+	removeSuns();
 	numGravity = 3;
 
 	float** v = (float**) malloc (sizeof (float) * numGravity);
@@ -109,8 +106,7 @@ void ParticleEmitter::spawnSuns(){
 	 */
 	gravity = (Particle**) malloc (sizeof(Particle*) * numGravity);
 	for(int i = 0 ; i < numGravity ; i ++){
-		gravity[i] = (Particle*) malloc (sizeof(Particle));
-		gravity[i]->init(p[i],v[i], 100, camera, false);
+		gravity[i] = new Particle (p[i],v[i], 100, camera, false);
 	}
 
 	gravityOn = true;
@@ -119,7 +115,7 @@ void ParticleEmitter::spawnSuns(){
 }
 
 void ParticleEmitter::spawnSun(){
-
+	removeSuns();
 	numGravity = 1;
 
 	float** v = (float**) malloc (sizeof (float) * numGravity);
@@ -137,7 +133,7 @@ void ParticleEmitter::spawnSun(){
 	gravity = (Particle**) malloc (sizeof(Particle*) * numGravity);
 	for(int i = 0 ; i < numGravity ; i ++){
 		gravity[i] = (Particle*) malloc (sizeof(Particle));
-		gravity[i]->init(p[i],v[i], 100, camera, false);
+		gravity[i] = new Particle (p[i],v[i], 100, camera, false);
 	}
 
 	gravityOn = true;
@@ -181,7 +177,21 @@ void ParticleEmitter::cloud(int num, float radius){
 
 
 }
+void ParticleEmitter::create(float* p, float * v, float m){
 
+	if(index >= MAX_PARTICLES)
+		index = 0;
+
+	delete particles[index];
+
+	particles[index] = new Particle(p,v, 1, camera,true);
+
+	index++;
+	created++;
+
+
+}
+/*
 void ParticleEmitter::create(float* p, float * v, float m){
 
 	int start = index;
@@ -221,7 +231,7 @@ void ParticleEmitter::create(float* p, float * v, float m){
 	found:; // Never again...
 
 }
-
+*/
 void ParticleEmitter::emit(){
 
 
@@ -235,9 +245,9 @@ void ParticleEmitter::emit(){
 	float ZLO = 0.3f;
 
 	float* v = new float[3];
-	v[0] = 0; //XLO + (float)rand()/((float)RAND_MAX/(XHI-XLO));
-	v[1] = 0; //YLO + (float)rand()/((float)RAND_MAX/(YHI-YLO));
-	v[2] = 0.2f; //ZLO + (float)rand()/((float)RAND_MAX/(ZHI-ZLO));
+	v[0] = XLO + (float)rand()/((float)RAND_MAX/(XHI-XLO));
+	v[1] = YLO + (float)rand()/((float)RAND_MAX/(YHI-YLO));
+	v[2] = ZLO + (float)rand()/((float)RAND_MAX/(ZHI-ZLO));
 
 	float* p = new float[3];
 	p[0] = position[0];

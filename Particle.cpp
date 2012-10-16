@@ -20,14 +20,18 @@
 #include <stdlib.h>
 #include <math.h>
 
-void Particle::init(float* pos, float* initialVelocity, float m, G308_Point* cam, bool d) {
+Particle::Particle(float* pos, float* initialVelocity, float m, G308_Point* cam, bool d) {
 
 	position = new float[3];
 	velocity = new float[3];
 	acceletation = new float[3];
 
-
 	for (int i = 0 ; i < 3 ; i ++){
+		acceletation[i] = 0;
+		position[i] = 0;
+		velocity[i] = 0;
+
+				;
 		position[i] = pos[i];
 		velocity[i] = initialVelocity[i];
 	}
@@ -35,10 +39,11 @@ void Particle::init(float* pos, float* initialVelocity, float m, G308_Point* cam
 	mass = m; // Default
 
 	/*
-	 * Lifespan
+	 * Life span
 	 */
 	float HI = 2000;
-	float LO = 1000;
+	float LO = 1500;
+
 	lifeSpanLeft = lifeSpan = LO + (float)rand()/((float)RAND_MAX/(HI-LO));
 
 	camera = cam;
