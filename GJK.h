@@ -16,8 +16,9 @@ public:
 	~GJK();
 
 	int maxIterations, currentSimplexPosition;
+	int s1c, s2c;
 
-	bool shapesIntersect(G308_Point*, G308_Point*);
+	bool shapesIntersect(G308_Point*, G308_Point*, int, int);
 	int pointDotProduct(G308_Point, G308_Point);
 	G308_Point pointCrossProduct(G308_Point, G308_Point);
 	G308_Point pointSubtraction(G308_Point, G308_Point);
@@ -31,7 +32,7 @@ public:
 	G308_Point maxPointInMinkDiffAlongDir(G308_Point*, G308_Point*, G308_Point);
 
 	// Finds the farthest point along a given direction of a convex polyhedron
-	G308_Point maxPointAlongDirection(G308_Point*, G308_Point);
+	G308_Point maxPointAlongDirection(G308_Point*, G308_Point, bool);
 
 	void removeValue(G308_Point*, G308_Point);
 };

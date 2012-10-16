@@ -30,13 +30,12 @@ class G308_Geometry
 {
 private:
 	// Array for Geometry
-	G308_Point* m_pVertexArray;		// Vertex Array
+
 	G308_Normal* m_pNormalArray;	// Normal Array
 	G308_Triangle* m_pTriangles;	// Triangle Array
 	G308_UVcoord* m_pUVArray;	    // Texture Coordinate Array
 
 	// Data for Geoemetry
-	int m_nNumPoint;
 	int m_nNumUV;
 	int m_nNumNormal;
 	int m_nNumPolygon;
@@ -60,14 +59,15 @@ private:
 	GLfloat* mat_ambient;
 
 public:
-
+	G308_Point* m_pVertexArray;		// Vertex Array
+	int m_nNumPoint;
 	float worldRot;
 	v3* pos;
 
 	G308_Geometry(void);
 	~G308_Geometry(void);
 
-	void ReadOBJ(const char* filename);
+	void ReadOBJ(char* filename);
 	void ReadTexture(const char* filename);
 
 	void CreateGLPolyGeometry(); // [Assignment5] Create GL Display List for Polygon Geometry, using textures!

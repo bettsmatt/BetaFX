@@ -271,7 +271,7 @@ void ParticleEmitter::renderParticles() {
 	 * All particles have the same texture, so we do this here.
 	 */
 	glEnable(GL_TEXTURE_2D);
-	glDepthMask(0);
+	//glDepthMask(0);
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glEnable(GL_POINT_SPRITE_ARB);
@@ -303,7 +303,6 @@ void ParticleEmitter::renderParticles() {
 }
 
 void ParticleEmitter::collideWithBalls(Ball* ball, Collision* c){
-	int count = 0;
 	for(int i = 0; i < MAX_PARTICLES && i < created ; i ++){
 		if(c->checkIfCollidedBallParticle(ball, particles[i])){
 			if(ball->isSpecial){
@@ -311,10 +310,15 @@ void ParticleEmitter::collideWithBalls(Ball* ball, Collision* c){
 				particles[i]->lifeSpanLeft = 0;
 			}
 			else{
-				count++;
-				//c->collisionBall(1, 100, 0.001, 1, 0.1, ball->position, particles[i]->position, ball->velocity, particles[i]->velocity);
+				float *ballVelocity = new float[3];
+				float *ballPosition = new float[3];
+				for(int i = 0; i < 3; i++){
+					ballVelocity[i] = ball->velocity[i];
+					ballPosition[i] = ball->position[i];
+				}
+
+				c->collisionBall(1, 100, 0.001, 1, 0.1, ballPosition, particles[i]->position, ballVelocity, particles[i]->velocity);
 			}
 		}
 	}
-	if(count > 0) printf("Count: %d\n", count);
 }
