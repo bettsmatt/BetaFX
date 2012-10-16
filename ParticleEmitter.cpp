@@ -258,8 +258,10 @@ void ParticleEmitter::emit(){
 
 	create(p,v,1.0f);
 
-	free(v);
-	free(p);
+	delete[] v;
+	delete[] p;
+	//free(v);
+	//free(p);
 
 }
 

@@ -36,6 +36,7 @@ enum MENU_TYPE {
 MENU_TYPE menu_choice = SIMPLE;
 bool choiceChanged = false;
 bool lightsOn = true;
+bool splineOn = true;
 
 GLuint g_mainWnd;
 GLuint g_nWinWidth = G308_WIN_WIDTH;
@@ -275,8 +276,8 @@ void tick (){
 
 	gjk->shapesIntersect(geometryPoint, secondPoint, geometry->m_nNumPoint, second->m_nNumPoint);
 	delete gjk;
-	delete geometryPoint;
-	delete secondPoint;
+	delete[] geometryPoint;
+	delete[] secondPoint;
 }
 
 
@@ -320,7 +321,7 @@ void G308_display() {
 
 
 	// Draw the spline with the control points
-	bspline->draw(GL_SELECT);
+	if(splineOn) bspline->draw(GL_SELECT);
 
 	// Draw the shape that goes along the spline if animation is moving.
 	if(animate == 1){
@@ -494,23 +495,6 @@ void G308_keyboardListener(unsigned char key, int x, int y) {
 		particeEmitter->removeParticles();
 
 	}
-
-	/*
-	if(key == 'j')
-	{
-		wind[0] = -0.1f;
-		particeEmitter->applyWind(wind);
-
-	}
-
-	if(key == 'l')
-	{
-		wind[0] = 0.1f;
-		particeEmitter->applyWind(wind);
-
-
-	}
-	 */
 	if(key == 'g'){
 		if(particeEmitter->isGravityOn())
 			particeEmitter->turnGravityOff();
@@ -614,6 +598,9 @@ void G308_keyboardListener(unsigned char key, int x, int y) {
 			glDisable(GL_LIGHT0);
 			glDisable(GL_LIGHT1);
 		}
+	}
+	else if(key == '2'){
+		splineOn = !splineOn;
 	}
 }
 
