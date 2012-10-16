@@ -14,7 +14,7 @@
 
 struct Frame {
 	ControlPoint ctrlPoint;
-	ControlPoint nextCtrlPoint;
+	ControlPoint tangent;
 	int isLast;
 };
 
@@ -30,7 +30,7 @@ private:
     int pointSelected;
     int currentFrame;
 
-    float deltaTime;
+
 
     float startTime;
 	float endTime;
@@ -41,21 +41,23 @@ private:
 
     void drawCurve();
    	void drawControlPoints(GLenum mode);
+   	void computeFrames();
+   	void computeKnots();
+   	void computeTimes();
+
 
 public:
     bool hasChanged;
+    bool pointAdded;
     bool infoDisplay;
+    float deltaTime;
 
 	BSpline();
 	BSpline(ControlPoint* points, int num);
 	virtual ~BSpline();
 
-	int getControlPointsNum();
-
 	void init();
-
 	void printArray(float* a, int size);
-
 	void assignColourId();
 
 	void draw();
@@ -66,10 +68,9 @@ public:
 	void moveSelectedPoint(float f, char c);
 	void addPoint(float x, float y, float z);
 
-	void computeFrames();
-	void computeKnots();
-	void computeTimes();
 	Frame nextFrame();
+	void resetFrame();
+	float nextTime();
 
 	void recalculate();
 
@@ -78,6 +79,8 @@ public:
 	void readNewTimes();
 	void promptForNewInterval();
 	void readNewInterval();
+	void printCoordinates();
+	ControlPoint computeTangent(float t);
 };
 
 #endif /* BSPLINE_H_ */

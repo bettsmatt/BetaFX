@@ -28,23 +28,53 @@
 
 using namespace std;
 
-ParticleEmitter::ParticleEmitter(Camera* c) {
+ParticleEmitter::ParticleEmitter(G308_Point* c) {
 
-	c = camera;
+	camera = c;
 	orientation = new float[4];
 	position = new float[3];
-	vector = new float[3];
+	vec = new float[3];
+
+	vector <Particle> particleVector;
+
 
 	particles = (Particle**) malloc (sizeof(Particle*) * MAX_PARTICLES);
-
 
 	index = 0;
 	created = 0;
 
+	numGravity = 0;
 	gravityOn = false;
 
-	numGravity = 3;
 
+}
+
+void ParticleEmitter::removeSuns(){
+
+	int oldNumG = numGravity;
+	numGravity = 0;
+	gravityOn = false;
+
+	for (int i = 0 ; i < oldNumG ; i ++){
+		free(gravity[i]);
+	}
+
+
+}
+
+void ParticleEmitter::removeParticles(){
+	int oldCreated = created;
+	created = 0;
+	index = 0;
+	gravityOn = false;
+
+	for(int i = 0 ; i < oldCreated && i < MAX_PARTICLES ; i ++)
+		free(particles[i]);
+
+}
+void ParticleEmitter::spawnSuns(){
+
+	numGravity = 3;
 
 	float** v = (float**) malloc (sizeof (float) * numGravity);
 	float** p = (float**) malloc (sizeof (float) * numGravity);
@@ -55,9 +85,9 @@ ParticleEmitter::ParticleEmitter(Camera* c) {
 	}
 
 	for(int i = 0 ; i < numGravity ; i ++){
-			p[i][0] = 15.0f * sin((PI * 2 / numGravity) * i );
-			p[i][2] = 15.0f * cos((PI * 2 / numGravity) * i );
-			p[i][1] = 0;
+		p[i][0] = 15.0f * sin((PI * 2 / numGravity) * i );
+		p[i][2] = 15.0f * cos((PI * 2 / numGravity) * i );
+		p[i][1] = 0;
 	}
 
 
@@ -80,18 +110,45 @@ ParticleEmitter::ParticleEmitter(Camera* c) {
 	gravity = (Particle**) malloc (sizeof(Particle*) * numGravity);
 	for(int i = 0 ; i < numGravity ; i ++){
 		gravity[i] = (Particle*) malloc (sizeof(Particle));
-		gravity[i]->init(p[i],v[i], 100, camera);
+		gravity[i]->init(p[i],v[i], 100, camera, false);
 	}
 
-	gravityOn = false;
+	gravityOn = true;
+
 
 }
+
+void ParticleEmitter::spawnSun(){
+
+	numGravity = 1;
+
+	float** v = (float**) malloc (sizeof (float) * numGravity);
+	float** p = (float**) malloc (sizeof (float) * numGravity);
+
+	for(int i = 0 ; i < numGravity ; i ++){
+		v[i] = new float[3];
+		p[i] = new float[3];
+	}
+
+	p[0][0] = 10;
+	p[0][1] = 2;
+	p[0][2] = 1;
+
+	gravity = (Particle**) malloc (sizeof(Particle*) * numGravity);
+	for(int i = 0 ; i < numGravity ; i ++){
+		gravity[i] = (Particle*) malloc (sizeof(Particle));
+		gravity[i]->init(p[i],v[i], 100, camera, false);
+	}
+
+	gravityOn = true;
+}
+
 
 ParticleEmitter::~ParticleEmitter(void) {
 
 	free(orientation);
 	free(position);
-	free(vector);
+	free(vec);
 
 	for (int i = 0 ; i < MAX_PARTICLES ; i ++)
 		free(particles[i]);
@@ -108,12 +165,16 @@ void ParticleEmitter::cloud(int num, float radius){
 
 
 	for(int i = 0 ; i < num ; i ++){
+
 		float* p = new float[3];
 		float* v = new float[3];
 
-		for(int j = 0 ; j < 3 ; j ++)
-			p[j] = 0 + sin((float)rand()/((float)RAND_MAX/(PI*2-0))) * (float)rand()/((float)RAND_MAX/(radius-0));
 
+
+		for(int j = 0 ; j < 3 ; j ++){
+			v[j] = 0;
+			p[j] = 0 + sin((float)rand()/((float)RAND_MAX/(PI*2-0))) * (float)rand()/((float)RAND_MAX/(radius-0));
+		}
 		create(p,v,1.0f);
 
 	}
@@ -129,7 +190,7 @@ void ParticleEmitter::create(float* p, float * v, float m){
 	// Make a new particle and increment the index
 	if(created < MAX_PARTICLES){
 		particles[index] = (Particle*) malloc (sizeof(Particle));
-		particles[index++]->init(p,v, 1, camera);
+		particles[index++]->init(p,v, 1, camera,true);
 		created++;
 	}
 
@@ -141,7 +202,7 @@ void ParticleEmitter::create(float* p, float * v, float m){
 			// Replace the dead one
 			if( particles[i]->isDead()){
 				particles[index] = (Particle*) malloc (sizeof(Particle));
-				particles[index++]->init(p, v, 1, camera);
+				particles[index++]->init(p, v, 1, camera,true);
 				index = i;
 				goto found; // I always wanted to use one of these :)
 			}
@@ -151,7 +212,7 @@ void ParticleEmitter::create(float* p, float * v, float m){
 		for(int i = 0 ; i < start ; i ++)
 			if(particles[i]->isDead()){
 				particles[index] = (Particle*) malloc (sizeof(Particle));
-				particles[index++]->init(p, v, 1, camera);
+				particles[index++]->init(p, v, 1, camera,true);
 				index = i;
 				goto found; // I always wanted to use one of these :)
 			}
@@ -170,13 +231,13 @@ void ParticleEmitter::emit(){
 	float YHI = 0.1f;
 	float YLO = -0.1f;
 
-	float ZHI = 0.3f;
-	float ZLO = 0.2f;
+	float ZHI = 0.4f;
+	float ZLO = 0.3f;
 
 	float* v = new float[3];
-	v[0] = XLO + (float)rand()/((float)RAND_MAX/(XHI-XLO));
-	v[1] = YLO + (float)rand()/((float)RAND_MAX/(YHI-YLO));
-	v[2] = ZLO + (float)rand()/((float)RAND_MAX/(ZHI-ZLO));
+	v[0] = 0; //XLO + (float)rand()/((float)RAND_MAX/(XHI-XLO));
+	v[1] = 0; //YLO + (float)rand()/((float)RAND_MAX/(YHI-YLO));
+	v[2] = 0.2f; //ZLO + (float)rand()/((float)RAND_MAX/(ZHI-ZLO));
 
 	float* p = new float[3];
 	p[0] = position[0];
@@ -184,6 +245,9 @@ void ParticleEmitter::emit(){
 	p[2] = position[2];
 
 	create(p,v,1.0f);
+
+	free(v);
+	free(p);
 
 }
 
@@ -195,7 +259,7 @@ void ParticleEmitter::tick(){
 		// Alive!
 		if(!particles[i]->isDead()){
 
-			particles[i]->applyFriction(0.01f);
+			//particles[i]->applyFriction(0.01f);
 
 			if(gravityOn)
 				for(int j = 0 ; j < numGravity ; j ++)
@@ -223,19 +287,21 @@ void ParticleEmitter::tick(){
 }
 
 void ParticleEmitter::applyWind(float* wind){
+	/*
 	for(int i = 0; i < MAX_PARTICLES && i < created ; i ++){
 		if(!particles[i]->isDead()){
 			particles[i]->applyForce(wind);
 		}
 	}
+	*/
 }
 
 
 void ParticleEmitter::setVector(float* v){
 
-	// Copy vector
+	// Copy vec
 	for(int i = 0 ; i < 3 ; i ++)
-		vector[i] = v[i];
+		vec[i] = v[i];
 
 	/*
 	 * Get the eular rotations for a vector,
@@ -291,13 +357,14 @@ class ParticleComp {
 public:
 	bool operator()(Particle& t1, Particle& t2)
 	{
-		return t1.position[1] > t2.position[1]; // true;//t1.Dist() < t2.Dist();
+		return t1.Dist() > t2.Dist();
 	}
 };
 
 void ParticleEmitter::renderParticles() {
 
 	glPushMatrix();
+	glLoadIdentity();
 
 	// Order by distance from camera.
 	priority_queue<Particle, std::vector<Particle>, ParticleComp> pq;
@@ -326,7 +393,7 @@ void ParticleEmitter::renderParticles() {
 	 * All particles have the same texture, so we do this here.
 	 */
 	glEnable(GL_TEXTURE_2D);
-	glDepthMask(0);
+	//glDepthMask(0);
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glEnable(GL_POINT_SPRITE_ARB);
@@ -357,7 +424,7 @@ void ParticleEmitter::renderParticles() {
 	glDisable(GL_BLEND);
 	glDisable(GL_POINT_SPRITE_ARB);
 	glDisable(GL_TEXTURE_2D);
-	glDepthMask(1);
+	//glDepthMask(1);
 	for(int i = 0; i < numGravity ; i ++)
 		gravity[i]->renderParticle();
 
@@ -381,5 +448,5 @@ void ParticleEmitter::collideWithBalls(Ball* ball, Collision* c){
 		}
 	}
 	if(count > 0) printf("Count: %d\n", count);
-*/
+	 */
 }

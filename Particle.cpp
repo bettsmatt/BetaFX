@@ -20,7 +20,7 @@
 #include <stdlib.h>
 #include <math.h>
 
-void Particle::init(float* pos, float* initialVelocity, float m, Camera* cam) {
+void Particle::init(float* pos, float* initialVelocity, float m, G308_Point* cam, bool d) {
 
 	position = new float[3];
 	velocity = new float[3];
@@ -37,11 +37,12 @@ void Particle::init(float* pos, float* initialVelocity, float m, Camera* cam) {
 	/*
 	 * Lifespan
 	 */
-	float HI = 20000;
-	float LO = 18000;
+	float HI = 2000;
+	float LO = 1000;
 	lifeSpanLeft = lifeSpan = LO + (float)rand()/((float)RAND_MAX/(HI-LO));
 
 	camera = cam;
+	dies = d;
 
 }
 
@@ -73,15 +74,20 @@ void Particle::tick (){
 		acceletation[i] = 0;
 	}
 
-	lifeSpanLeft--;
-
+	if(dies){
+		lifeSpanLeft--;
+	}
 }
 
+/*
+ * Order based on dist from the camera
+ */
 float Particle::Dist(){
+
 	return sqrt(
-			(position[0] * position[0]) - (camera->rotx * camera->rotx) +
-			(position[1] * position[1]) - (camera->rotx * camera->rotx) +
-			(position[2] * position[2]) - (camera->rotx * camera->rotx)
+			(position[0] * position[0]) - (camera->x * camera->x) +
+			(position[1] * position[1]) - (camera->y * camera->y) +
+			(position[2] * position[2]) - (camera->z * camera->z)
    );
 }
 
@@ -164,6 +170,7 @@ void Particle::applyFriction(float friction){
 	for(int i = 0 ; i < 3 ; i++)
 		f[i] = velocity[i] * -friction;
 	applyForce(f);
+	free(f);
 }
 
 void Particle::applyAttractiveForce(Particle* p1, Particle* p2, float strength, float minDist){

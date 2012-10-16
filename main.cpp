@@ -8,6 +8,7 @@
 #include <sstream>
 #include <math.h>
 #include "G308_Geometry.h"
+#include "Skeleton.h"
 #include "quaternion.h"
 #include "G308_ImageLoader.h"
 #include "ParticleEmitter.h"
@@ -19,14 +20,25 @@
 #include "BSpline.h"
 #include "ControlPoint.h"
 #include "Shape.h"
+#include "FileReader.h"
 
 #define NUM_KNOTS 8
 #define NUM_POINTS 4
+
+// Menu items
+enum MENU_TYPE {
+	CAMERA_ORIGIN, CAMERA_TANGENT, SIMPLE, SKELETON, REMOVE_PARTICLES, REMOVE_SUNS, SPAWN_SUN, SPAWN_SUNS
+};
+
+
+// Assign a default value
+MENU_TYPE menu_choice = SIMPLE;
 
 GLuint g_mainWnd;
 GLuint g_nWinWidth = G308_WIN_WIDTH;
 GLuint g_nWinHeight = G308_WIN_HEIGHT;
 
+G308_Point cameraPos = {0,0,50};
 int lastx, lasty = 0;
 
 unsigned char buttons[3] = { 0 };
@@ -58,9 +70,13 @@ Collision* collision;
 G308_Geometry** geometry = NULL;
 Ball** balls = NULL;
 int numGeo, hitCount = 0;
+
 Camera* camera = NULL;
 BSpline* bspline = NULL;
 Shape* shape = NULL;
+Skeleton* skeleton = NULL;
+FileReader* fReader = NULL;
+
 Cube** cubes = NULL;
 
 int key_held = 0;
@@ -87,7 +103,11 @@ int main(int argc, char** argv) {
 	glutDisplayFunc(G308_display);
 	glutReshapeFunc(G308_Reshape);
 
-	particeEmitter = new ParticleEmitter(camera);
+
+	particeEmitter = new ParticleEmitter(&cameraPos);
+
+	G308_init();
+
 	float* v = new float[3];
 	v[0] = 0;
 	v[1] = 1;
@@ -108,8 +128,27 @@ int main(int argc, char** argv) {
 	bspline = new BSpline();
 	bspline->init();
 	shape = new Shape();
+	if(argc > 1){
+		skeleton = new Skeleton();
+		fReader = new FileReader(skeleton->root);
+		fReader->readASF(argv[1]);
+	}
 
-	G308_init();
+	/* Set the menu */
+	glutCreateMenu(menu);
+	glutAddMenuEntry("Simple shape", SIMPLE);
+	glutAddMenuEntry("Camera - origin", CAMERA_ORIGIN);
+	glutAddMenuEntry("Camera - tangent", CAMERA_TANGENT);
+	glutAddMenuEntry("Skeleton", SKELETON);
+
+	glutAddMenuEntry("Remove Particles", REMOVE_PARTICLES);
+	glutAddMenuEntry("Remove Suns", REMOVE_SUNS);
+	glutAddMenuEntry("Spawn Suns", SPAWN_SUNS);
+	glutAddMenuEntry("Spawn Sun", SPAWN_SUN);
+
+	glutAttachMenu(GLUT_RIGHT_BUTTON);
+
+
 	glutIdleFunc(tick);
 	glutMouseFunc(mouse);
 	glutMotionFunc(mouseMotion);
@@ -144,7 +183,7 @@ void loadTexture (char* filename, GLuint id){
  */
 void tick (){
 
-	Collision* c = new Collision;
+	Collision* c = new Collision();
 	/*
 	 * Simulate a frame in the particle emitter
 	 */
@@ -164,30 +203,29 @@ void tick (){
 		particeEmitter->collideWithBalls(balls[i], c);
 	}
 
-
-	/*
-	 * Rotate the camera for effect
-	 */
-	 /*
-	glMatrixMode(GL_PROJECTION);
-	glLoadIdentity();
-	gluPerspective(G308_FOVY, (double) g_nWinWidth / (double) g_nWinHeight, G308_ZNEAR_3D, G308_ZFAR_3D);
-	glMatrixMode(GL_MODELVIEW);
-	glLoadIdentity();
-
-	float x = sin(camAngle) * 50.0f;
-	float z = cos(camAngle) * 50.0f;
-    */
-
 	for(int i = 0; i < maxBalls; i++){
 		for(int j = 0; j < 5; j++){
 			c->checkCollision(1.0, cubes[j], balls[i]);
 		}
 	}
 
+	//
+	// If animation is on, move the object one step.
 	if(animate == 1){
-		//camera->lookAt(bspline->nextFrame(), (double)g_nWinWidth, (double)g_nWinHeight);
-		shape->move(bspline->nextFrame());
+		switch(menu_choice){
+		case SIMPLE:
+			shape->move(bspline);
+			break;
+		case CAMERA_ORIGIN:
+			camera->lookAt(bspline, 1, (double)g_nWinWidth, (double)g_nWinHeight, &cameraPos);
+			break;
+		case CAMERA_TANGENT:
+			camera->lookAt(bspline, 2, (double)g_nWinWidth, (double)g_nWinHeight, &cameraPos);
+			break;
+		case SKELETON:
+			break;
+		}
+
 	}
 
 	glutPostRedisplay();
@@ -222,7 +260,7 @@ void G308_display() {
 
 	glPushMatrix();
 
-	camera->rotateCamera();
+	camera->rotateCamera(&cameraPos);
 
 	/*
 	 * Draw stuff here!
@@ -237,8 +275,24 @@ void G308_display() {
 	// Draw the spline with the control points
 	bspline->draw();
 
-	// Draw the shape that goes along the spline
-	shape->draw();
+	// Draw the shape that goes along the spline if animation is moving.
+	if(animate == 1){
+		switch (menu_choice) {
+		case SIMPLE:
+			shape->draw();
+			break;
+		case SKELETON:
+			if (skeleton != NULL)
+				skeleton->display();
+			break;
+		case CAMERA_ORIGIN:
+			break;
+		case CAMERA_TANGENT:
+			break;
+		default:
+			break;
+		}
+	}
 
 	/*
 	 * Draw the particle emmiter and it's particles
@@ -246,7 +300,7 @@ void G308_display() {
 	particeEmitter->renderParticles();
 
 	for(int i = 0; i < maxBalls; i ++) balls[i]->renderBall();
-	//for(int j = 0; j < 5; j++) cubes[j]->renderCube();
+	for(int j = 0; j < 5; j++) cubes[j]->renderCube();
 
 	glPopMatrix();
 
@@ -266,6 +320,7 @@ void mouseMotion (int x, int y){
 	lastx = x;
 	lasty = y;
 
+	//
 	// Changing position of selected control point.
 	if(buttons[0] && key_held == MOVE_ALONG_X){
 		bspline->moveSelectedPoint((float) 0.05f * diffx, 'x');
@@ -276,10 +331,9 @@ void mouseMotion (int x, int y){
 	else if(buttons[0] && key_held == MOVE_ALONG_Z){
 		bspline->moveSelectedPoint((float) 0.05f * diffx, 'z');
 	}
-	// Change the view point of the scene.
-	else if (buttons[2]) {
-		camera->zoom -= (float) 0.05f * diffy;
-	} else if (buttons[0]) {
+	//
+	// Change the view point of the scene (rotate and pan).
+	else if (buttons[0]) {
 		camera->rotx += (float) 0.5f * diffy;
 		camera->roty += (float) 0.5f * diffx;
 	} else if (buttons[1]) {
@@ -302,20 +356,42 @@ void mouse (int b, int s, int x, int y){
 
 	bspline->deselectPoint();
 
+	//
 	// This one is for selecting a control point and changing its position.
 	if(b == GLUT_LEFT_BUTTON && s == GLUT_DOWN
 			&& (key_held == MOVE_ALONG_X || key_held == MOVE_ALONG_Y || key_held == MOVE_ALONG_Z)){
 		bspline->selectPoint(x, y);
 		buttons[0] = ((GLUT_DOWN == s) ? 1 : 0);
 	}
+	// Remember that left button is pressed.
 	else if(b == GLUT_LEFT_BUTTON){
 		buttons[0] = ((GLUT_DOWN == s) ? 1 : 0);
 	}
+	// Remember that middle button is pressed.
 	else if(b == GLUT_MIDDLE_BUTTON){
 		buttons[1] = ((GLUT_DOWN == s) ? 1 : 0);
 	}
-	else if(b == GLUT_RIGHT_BUTTON){
-		buttons[2] = ((GLUT_DOWN == s) ? 1 : 0);
+
+	glutPostRedisplay();
+}
+
+// Menu items
+void menu(int item) {
+	menu_choice = (MENU_TYPE)item; // CAMERA_ORIGIN, CAMERA_TANGENT, SIMPLE, or SKELETON
+
+	switch(item){
+		case REMOVE_PARTICLES:
+			particeEmitter->removeParticles();
+			break;
+		case REMOVE_SUNS:
+			particeEmitter->removeSuns();
+			break;
+		case SPAWN_SUN:
+			particeEmitter->spawnSun();
+			break;
+		case SPAWN_SUNS:
+			particeEmitter->spawnSuns();
+			break;
 	}
 
 	glutPostRedisplay();
@@ -333,26 +409,27 @@ void G308_keyboardListener(unsigned char key, int x, int y) {
 	float* wind = new float [3];
 	wind[0] = 0; wind[1] = 0; wind[2] = 0;
 
+	// Spawn a cloud of particles
 	if(key == 'c')
 	{
 		particeEmitter->cloud(1000,10);
 	}
 
-	/*
+	// Remove all suns from the emitter
 	if(key == 'i')
 	{
-		wind[1] = 0.1f;
-		particeEmitter->applyWind(wind);
+		particeEmitter->removeSuns();
 
 	}
 
+	// Remove all particles from th emitter
 	if(key == 'k')
 	{
-		wind[1] = -0.1f;
-		particeEmitter->applyWind(wind);
+		particeEmitter->removeParticles();
 
 	}
 
+	/*
 	if(key == 'j')
 	{
 		wind[0] = -0.1f;
@@ -375,25 +452,22 @@ void G308_keyboardListener(unsigned char key, int x, int y) {
 	}
 
 	if(key == 'e')
-		for(int i = 0 ; i < 100 ; i ++)
+		for(int i = 0 ; i < 1 ; i ++)
 			particeEmitter->emit();
 
-	// b,n,m decide which coordinate of the control point to change.
+
 	key_held = 0;
-	if (key == 'b') {
-		key_held = MOVE_ALONG_X;
-	}
-	else if (key == 'n') {
-		key_held = MOVE_ALONG_Y;
-	}
-	else if (key == 'm') {
-		key_held = MOVE_ALONG_Z;
-	}
-	else if(key == 'a'){
-		animate = animate == 1? 0 : 1;
-	}
+	//
+	// b,n,m decide which coordinate of the control point to change.
+	if (key == 'b') { key_held = MOVE_ALONG_X; }
+	else if (key == 'n') { key_held = MOVE_ALONG_Y; }
+	else if (key == 'm') { key_held = MOVE_ALONG_Z; }
+	//
+	// Toggle the animation of objects along a spline.
+	else if(key == 'a'){ animate = animate == 1? 0 : 1; }
+	//
+	// Prompt for coordinates for the new point
 	else if(key == 'p'){
-		// Prompt for coordinates for the new point
 		float x,y,z;
 		printf("\nAdd point: Enter coordinates x y z: ");
 		if(scanf("%f %f %f", &x, &y, &z) == 3){
@@ -401,24 +475,45 @@ void G308_keyboardListener(unsigned char key, int x, int y) {
 			glutPostRedisplay();
 		}
 	}
+	//
 	// Toggle the display of times for each control point.
 	else if(key == 's'){
 		bspline->infoDisplay = !bspline->infoDisplay;
 		glutPostRedisplay();
 	}
+	//
 	// Change the times an object passes through each control point.
 	else if(key == 'x'){
-		// Prompt for new time values
 		bspline->promptForNewTimes();
 		bspline->readNewTimes();
 		glutPostRedisplay();
 	}
+	//
+	// Change the time interval in takes an object to move from start to finish of a spline.
 	else if(key == 'z'){
-		// Prompt for new time values
 		bspline->promptForNewInterval();
 		bspline->readNewInterval();
 		glutPostRedisplay();
 	}
+	else if(key == 'c'){
+		bspline->printCoordinates();
+	}
+	//
+	// Move camera back to its original position.
+	else if (key == 'v') {
+		camera->resetCamera(&cameraPos);
+		camera->setInitialCameraPosition((double) g_nWinWidth, (double) g_nWinHeight);
+		glutPostRedisplay();
+	}
+	//
+	// Camera zoom in and out
+	else if(key == '6'){
+		camera->zoom -= 1;
+	}
+	else if(key == '9'){
+		camera->zoom += 1;
+	}
+
 }
 
 
@@ -443,7 +538,7 @@ void G308_SetLight() {
 	/*
 	 * Ambient
 	 */
-	GLfloat ambientG[] = { 1, 1, 1, 1 };
+	GLfloat ambientG[] = { 1, 1, 1, 0 };
 	glLightModelfv(GL_LIGHT_MODEL_AMBIENT,ambientG);
 
 	/*

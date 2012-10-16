@@ -29,7 +29,7 @@ class ParticleEmitter
 private:
 
 	float* position; // x, y, z
-	float* vector; // x, y, z
+	float* vec; // x, y, z
 	float* orientation; // Angle, x, y, z
 
 	bool on;
@@ -45,7 +45,7 @@ private:
 
 	void create(float*, float*, float);
 
-	Camera* camera;
+	G308_Point* camera;
 
 
 public:
@@ -72,7 +72,7 @@ public:
 	void turnGravityOff();
 	bool isGravityOn();
 
-	ParticleEmitter(Camera*); // Defaults
+	ParticleEmitter(G308_Point*); // Defaults
 	ParticleEmitter(char*); // Load from *.pec file
 	~ParticleEmitter(void);
 
@@ -80,4 +80,11 @@ public:
 	void toggleRenderMode();	// Toggle between wire frame, solid and textured
 
 	void collideWithBalls(Ball*, Collision*);
+
+	void removeParticles(); // Remove all particles from the scene
+	void removeSuns(); // remove all suns from the emmitter
+
+	void spawnSuns(); // Spawn 3 suns
+	void spawnSun(); // Spawn single sun
+
 };
