@@ -360,7 +360,7 @@ void FileReader::readBone(char* buff, FILE* file) {
 			} else {
 				sscanf(p, "%s ", t1);
 				if (strcmp(t1, "id") == 0) {
-					sscanf(p, "id %s", id);
+					sscanf(p, "id %i", &id);
 					root[numBones].id = id;
 				}
 				else if (strcmp(t1, "name") == 0) {

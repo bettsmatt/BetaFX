@@ -35,6 +35,9 @@ Ball::Ball(float* initialPosition, float* initialVelocity, bool sp) {
 	for(int i = 0 ; i < 3 ; i ++)
 		position[i] = initialPosition[i];
 
+	for(int i = 0 ; i < 3 ; i ++)
+		acceletation[i] = 0;
+
 	mass = 1; // Default
 
 }
@@ -76,7 +79,6 @@ void Ball::tick (){
 		velocity[i] += acceletation[i];
 		position[i] += velocity[i];
 		acceletation[i] = 0;
-
 		if(velocity[i] > 5) velocity[i] = 5;
 	}
 }

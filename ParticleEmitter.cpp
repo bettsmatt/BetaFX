@@ -231,7 +231,7 @@ void ParticleEmitter::create(float* p, float * v, float m){
 	found:; // Never again...
 
 }
-*/
+ */
 void ParticleEmitter::emit(){
 
 
@@ -264,7 +264,7 @@ void ParticleEmitter::emit(){
 void ParticleEmitter::tick(){
 
 	// Loop through all active particles drawing them
-	for(int i = 0; i < MAX_PARTICLES && i < created ; i ++)
+	for(int i = 0; i < MAX_PARTICLES && i < created ; i ++){
 
 		// Alive!
 		if(!particles[i]->isDead()){
@@ -273,27 +273,28 @@ void ParticleEmitter::tick(){
 
 			if(gravityOn)
 				for(int j = 0 ; j < numGravity ; j ++)
-					particles[i]->applyAttractiveForce(particles[i], gravity[j], 0.01f, 1000);
+					Particle::applyAttractiveForce(particles[i], gravity[j], 0.01f, 1000);
 
 			particles[i]->tick(); // Simulate
 
 		}
 
-
-	if(gravityOn){
-		for(int i = 0 ; i < numGravity ; i ++){
-			for(int j = 0 ; j < numGravity ; j ++){
-				if(i != j ){
-					gravity[i]->applyAttractiveForce(gravity[i], gravity[j], 0.001f, 1000);
+		if(gravityOn){
+			for(int i = 0 ; i < numGravity ; i ++){
+				for(int j = 0 ; j < numGravity ; j ++){
+					if(i != j ){
+						Particle::applyAttractiveForce(gravity[i], gravity[j], 0.001f, 1000);
+					}
 				}
+
+
+				for(int i = 0 ; i < numGravity ; i ++){
+					gravity[i]->tick();
+				}
+
 			}
 		}
 	}
-
-	for(int i = 0 ; i < numGravity ; i ++){
-		gravity[i]->tick();
-	}
-
 }
 
 void ParticleEmitter::applyWind(float* wind){
@@ -303,7 +304,7 @@ void ParticleEmitter::applyWind(float* wind){
 			particles[i]->applyForce(wind);
 		}
 	}
-	*/
+	 */
 }
 
 
@@ -443,8 +444,6 @@ void ParticleEmitter::renderParticles() {
 }
 
 void ParticleEmitter::collideWithBalls(Ball* ball, Collision* c){
-	/*
-	int count = 0;
 	for(int i = 0; i < MAX_PARTICLES && i < created ; i ++){
 		if(c->checkIfCollidedBallParticle(ball, particles[i])){
 			if(ball->isSpecial){
@@ -452,11 +451,15 @@ void ParticleEmitter::collideWithBalls(Ball* ball, Collision* c){
 				particles[i]->lifeSpanLeft = 0;
 			}
 			else{
-				count++;
-				c->collisionBall(1, 100, 0.001, 1, 0.1, ball->position, particles[i]->position, ball->velocity, particles[i]->velocity);
+				float *ballVelocity = new float[3];
+				float *ballPosition = new float[3];
+				for(int j = 0; j < 3; j++){
+					ballVelocity[j] = ball->velocity[j];
+					ballPosition[j] = ball->position[j];
+				}
+
+				c->collisionBall(1, 100, 0.001, 1, 0.1, ballPosition, particles[i]->position, ballVelocity, particles[i]->velocity);
 			}
 		}
 	}
-	if(count > 0) printf("Count: %d\n", count);
-	 */
 }

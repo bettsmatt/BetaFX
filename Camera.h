@@ -28,7 +28,7 @@ private:
 
 public:
 	float zoom, rotx, roty, tx, ty;
-	//float posX, posY, posZ;
+	float posX, posY, posZ;
 	Camera();
 	virtual ~Camera();
 

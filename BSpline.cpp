@@ -108,6 +108,7 @@ void BSpline::drawControlPoints(GLenum mode) {
 	}
 	// draw the control points
 	for (int i = 0; i < controlPointsNum; i++) {
+		printf("i, pointSelected, point[i]: %i %i %f %f %f\n", i, pointSelected, controlPoints[i].x, controlPoints[i].y, controlPoints[i].z);
 		controlPoints[i].draw(pointSelected == i);
 		if(infoDisplay) controlPoints[i].showTime();
 	}

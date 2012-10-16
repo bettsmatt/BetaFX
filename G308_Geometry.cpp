@@ -96,7 +96,7 @@ void G308_Geometry::SetPos(v3* newPosition){
 //-------------------------------------------------------
 // Read in the OBJ (Note: fails quietly, so take care)
 //--------------------------------------------------------
-void G308_Geometry::ReadOBJ(const char *filename) {
+void G308_Geometry::ReadOBJ(char *filename) {
 	FILE* fp;
 	char mode, vmode;
 	char str[200];
@@ -148,11 +148,11 @@ void G308_Geometry::ReadOBJ(const char *filename) {
 
 	if (m_pNormalArray != NULL)
 		delete[] m_pNormalArray;
-	m_pNormalArray = new G308_Normal[m_nNumNormal];
+	m_pNormalArray = new G308_Normal[m_nNumNormal+1];
 
 	if (m_pUVArray != NULL)
 		delete[] m_pUVArray;
-	m_pUVArray = new G308_UVcoord[m_nNumUV];
+	m_pUVArray = new G308_UVcoord[m_nNumUV+1];
 
 	if (m_pTriangles != NULL)
 		delete[] m_pTriangles;
@@ -276,33 +276,49 @@ void G308_Geometry::CreateGLPolyGeometry() {
 
 	glBegin(GL_TRIANGLES);
 
+	G308_Point n1, n2, n3;
+	G308_UVcoord t1, t2, t3;
 	for(int i = 0 ; i < m_nNumPolygon ; i ++){
 
 		G308_Point v1 = m_pVertexArray[m_pTriangles[i].v1];
 		G308_Point v2 = m_pVertexArray[m_pTriangles[i].v2];
 		G308_Point v3 = m_pVertexArray[m_pTriangles[i].v3];
 
-		G308_Point n1 = m_pNormalArray[m_pTriangles[i].n1];
-		G308_Point n2 = m_pNormalArray[m_pTriangles[i].n2];
-		G308_Point n3 = m_pNormalArray[m_pTriangles[i].n3];
-
-		G308_UVcoord t1 = m_pUVArray[m_pTriangles[i].t1];
-		G308_UVcoord t2 = m_pUVArray[m_pTriangles[i].t2];
-		G308_UVcoord t3 = m_pUVArray[m_pTriangles[i].t3];
-
+		if (m_nNumNormal > 0) {
+			n1 = m_pNormalArray[m_pTriangles[i].n1];
+			n2 = m_pNormalArray[m_pTriangles[i].n2];
+			n3 = m_pNormalArray[m_pTriangles[i].n3];
+		}
+		if (m_nNumUV > 0) {
+			t1 = m_pUVArray[m_pTriangles[i].t1];
+			t2 = m_pUVArray[m_pTriangles[i].t2];
+			t3 = m_pUVArray[m_pTriangles[i].t3];
+		}
 		float textMult = 10.0f;
 
-		glTexCoord2f(t1.u * textMult, t1.v * textMult);
-		glNormal3f(n1.x, n1.y, n1.z );
-		glVertex3f(v1.x, v1.y, v1.z );
+		if (m_nNumUV > 0) {
+			glTexCoord2f(t1.u * textMult, t1.v * textMult);
+		}
+		if (m_nNumNormal > 0) {
+			glNormal3f(n1.x, n1.y, n1.z);
+		}
+		glVertex3f(v1.x, v1.y, v1.z);
 
-		glTexCoord2f(t2.u * textMult, t2.v * textMult);
-		glNormal3f(n2.x, n2.y, n2.z );
-		glVertex3f(v2.x, v2.y, v2.z );
+		if (m_nNumUV > 0) {
+			glTexCoord2f(t2.u * textMult, t2.v * textMult);
+		}
+		if (m_nNumNormal > 0) {
+			glNormal3f(n2.x, n2.y, n2.z);
+		}
+		glVertex3f(v2.x, v2.y, v2.z);
 
-		glTexCoord2f(t3.u * textMult, t3.v *textMult);
-		glNormal3f(n3.x, n3.y, n3.z );
-		glVertex3f(v3.x, v3.y, v3.z );
+		if (m_nNumUV > 0) {
+			glTexCoord2f(t3.u * textMult, t3.v * textMult);
+		}
+		if (m_nNumNormal > 0) {
+			glNormal3f(n3.x, n3.y, n3.z);
+		}
+		glVertex3f(v3.x, v3.y, v3.z);
 
 	}
 
@@ -408,9 +424,9 @@ void G308_Geometry::RenderGeometry() {
 
 	glPushMatrix();
 
-	glRotatef(worldRot,0,1,0);
+	//glRotatef(worldRot,0,1,0);
 
-	glTranslated(pos->x,pos->y,pos->z);
+	//glTranslated(pos->x,pos->y,pos->z);
 	/*
 	 * Materials
 	 */
@@ -419,7 +435,7 @@ void G308_Geometry::RenderGeometry() {
 	glMaterialfv(GL_FRONT, GL_DIFFUSE, mat_diffuse);
 	glMaterialfv(GL_FRONT, GL_AMBIENT, mat_ambient);
 
-	if(hasTexture){
+	/*if(hasTexture){
 		glEnable(GL_TEXTURE_2D);
 
 		glBindTexture(GL_TEXTURE_2D, textureID);
@@ -432,45 +448,61 @@ void G308_Geometry::RenderGeometry() {
 
 	if(hasCubemap){
 		EnableCubemap();
-	}
+	}*/
 
 
 	glBegin(GL_TRIANGLES);
 
-	for(int i = 0 ; i < m_nNumPolygon ; i ++){
+	G308_Point n1, n2, n3;
+		G308_UVcoord t1, t2, t3;
+		for(int i = 0 ; i < m_nNumPolygon ; i ++){
 
-		G308_Point v1 = m_pVertexArray[m_pTriangles[i].v1];
-		G308_Point v2 = m_pVertexArray[m_pTriangles[i].v2];
-		G308_Point v3 = m_pVertexArray[m_pTriangles[i].v3];
+				G308_Point v1 = m_pVertexArray[m_pTriangles[i].v1];
+				G308_Point v2 = m_pVertexArray[m_pTriangles[i].v2];
+				G308_Point v3 = m_pVertexArray[m_pTriangles[i].v3];
 
-		G308_Point n1 = m_pNormalArray[m_pTriangles[i].n1];
-		G308_Point n2 = m_pNormalArray[m_pTriangles[i].n2];
-		G308_Point n3 = m_pNormalArray[m_pTriangles[i].n3];
+				if (m_nNumNormal > 0) {
+					n1 = m_pNormalArray[m_pTriangles[i].n1];
+					n2 = m_pNormalArray[m_pTriangles[i].n2];
+					n3 = m_pNormalArray[m_pTriangles[i].n3];
+				}
+				if (m_nNumUV > 0) {
+					t1 = m_pUVArray[m_pTriangles[i].t1];
+					t2 = m_pUVArray[m_pTriangles[i].t2];
+					t3 = m_pUVArray[m_pTriangles[i].t3];
+				}
+				float textMult = 10.0f;
 
-		G308_UVcoord t1 = m_pUVArray[m_pTriangles[i].t1];
-		G308_UVcoord t2 = m_pUVArray[m_pTriangles[i].t2];
-		G308_UVcoord t3 = m_pUVArray[m_pTriangles[i].t3];
+				if (m_nNumUV > 0) {
+					glTexCoord2f(t1.u * textMult, t1.v * textMult);
+				}
+				if (m_nNumNormal > 0) {
+					glNormal3f(n1.x, n1.y, n1.z);
+				}
+				glVertex3f(v1.x, v1.y, v1.z);
 
-		float textMult = 10.0f;
+				if (m_nNumUV > 0) {
+					glTexCoord2f(t2.u * textMult, t2.v * textMult);
+				}
+				if (m_nNumNormal > 0) {
+					glNormal3f(n2.x, n2.y, n2.z);
+				}
+				glVertex3f(v2.x, v2.y, v2.z);
 
-		glTexCoord2f(t1.u * textMult, t1.v * textMult);
-		glNormal3f(n1.x, n1.y, n1.z );
-		glVertex3f(v1.x, v1.y, v1.z );
+				if (m_nNumUV > 0) {
+					glTexCoord2f(t3.u * textMult, t3.v * textMult);
+				}
+				if (m_nNumNormal > 0) {
+					glNormal3f(n3.x, n3.y, n3.z);
+				}
+				glVertex3f(v3.x, v3.y, v3.z);
 
-		glTexCoord2f(t2.u * textMult, t2.v * textMult);
-		glNormal3f(n2.x, n2.y, n2.z );
-		glVertex3f(v2.x, v2.y, v2.z );
-
-		glTexCoord2f(t3.u * textMult, t3.v *textMult);
-		glNormal3f(n3.x, n3.y, n3.z );
-		glVertex3f(v3.x, v3.y, v3.z );
-
-	}
+			}
 
 
 	glEnd();
 
-	if(hasCubemap){
+	/*if(hasCubemap){
 		DisableCubemap();
 	}
 
@@ -478,7 +510,7 @@ void G308_Geometry::RenderGeometry() {
 		glDisable(GL_TEXTURE_2D);
 		glDisable(GL_TEXTURE_GEN_S);
 		glDisable(GL_TEXTURE_GEN_T);
-	}
+	}*/
 
 
 

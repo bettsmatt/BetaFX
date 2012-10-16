@@ -100,16 +100,6 @@ ControlPoint operator-(const ControlPoint& p1, const ControlPoint& p2) {
 	return q;
 }
 
-ControlPoint operator*(const ControlPoint& q1, const ControlPoint& q2) {
-//	float a = q1.a * q2.a - q1.b * q2.b - q1.c * q2.c - q1.d * q2.d;
-//	float b = q1.a * q2.b + q1.b * q2.a + q1.c * q2.d - q1.d * q2.c;
-//	float c = q1.a * q2.c - q1.b * q2.d + q1.c * q2.a + q1.d * q2.b;
-//	float d = q1.a * q2.d + q1.b * q2.c - q1.c * q2.b + q1.d * q2.a;
-//
-//	ControlPoint q(a, b, c, d);
-//	return q;
-}
-
 ControlPoint operator*(const ControlPoint& p1, const float& f) {
 	ControlPoint q(f * p1.x, f * p1.y, f * p1.z);
 	return q;

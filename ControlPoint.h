@@ -30,7 +30,6 @@ public:
 
 friend ControlPoint operator+(const ControlPoint&, const ControlPoint&);
 friend ControlPoint operator-(const ControlPoint&, const ControlPoint&);
-friend ControlPoint operator*(const ControlPoint&, const ControlPoint&);
 friend ControlPoint operator*(const ControlPoint&, const float&);
 friend ControlPoint operator/(const ControlPoint&, const float&);
 
