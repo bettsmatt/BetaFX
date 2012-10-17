@@ -628,7 +628,6 @@ void G308_keyboardListener(unsigned char key, int x, int y) {
 
 		balls[currentBalls] = new Ball(p, v, 1, special);
 		currentBalls ++;
-		printf("Good");
 	}
 	else if(key == '['){
 		delete[] balls;
