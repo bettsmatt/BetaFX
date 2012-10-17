@@ -20,7 +20,13 @@ BSpline::BSpline() {
 	controlPoints[1] = ControlPoint(5, -2, 14, 2.0f);
 	controlPoints[2] = ControlPoint(-5, 0, 0, 3.0f);
 	controlPoints[3] = ControlPoint(-10, 5, -2, 2.0f);
-	controlPoints[4] = ControlPoint(-15, 5, -2, 1.0f);
+	controlPoints[4] = ControlPoint(-1, 9, -2, 1.0f);
+
+//	controlPoints[0] = ControlPoint(15, 2, 0, 1.0f);
+//	controlPoints[1] = ControlPoint(5, -6, 1, 2.0f);
+//	controlPoints[2] = ControlPoint(-5, -9, -1, 3.0f);
+//	controlPoints[3] = ControlPoint(-10, -7, -2, 2.0f);
+//	controlPoints[4] = ControlPoint(-15, 0, 0, 1.0f);
 }
 
 BSpline::BSpline(ControlPoint* points, int num){
