@@ -29,7 +29,7 @@
 
 // Menu items
 enum MENU_TYPE {
-	CAMERA_ORIGIN, CAMERA_TANGENT, SIMPLE, SKELETON, REMOVE_PARTICLES, REMOVE_SUNS, SPAWN_SUN, SPAWN_SUNS
+	CAMERA, SIMPLE, SKELETON, REMOVE_PARTICLES, REMOVE_SUNS, SPAWN_SUN, SPAWN_SUNS
 };
 
 
@@ -172,8 +172,7 @@ int main(int argc, char** argv) {
 	/* Set the menu */
 	glutCreateMenu(menu);
 	glutAddMenuEntry("Simple shape", SIMPLE);
-	glutAddMenuEntry("Camera - origin", CAMERA_ORIGIN);
-	glutAddMenuEntry("Camera - tangent", CAMERA_TANGENT);
+	glutAddMenuEntry("Camera", CAMERA);
 	glutAddMenuEntry("Skeleton", SKELETON);
 
 	glutAddMenuEntry("Remove Particles", REMOVE_PARTICLES);
@@ -255,14 +254,13 @@ void tick (){
 		case SIMPLE:
 			shape->move(bspline);
 			break;
-		case CAMERA_ORIGIN:
-			camera->lookAt(bspline, 1, (double)g_nWinWidth, (double)g_nWinHeight, &cameraPos);
-			break;
-		case CAMERA_TANGENT:
+		case CAMERA:
 			camera->lookAt(bspline, 2, (double)g_nWinWidth, (double)g_nWinHeight, &cameraPos);
 			break;
 		case SKELETON:
 			if (skeleton != NULL) skeleton->move(bspline);
+			break;
+		default:
 			break;
 		}
 
@@ -365,9 +363,7 @@ void G308_display() {
 			if (skeleton != NULL)
 				skeleton->display();
 			break;
-		case CAMERA_ORIGIN:
-			break;
-		case CAMERA_TANGENT:
+		case CAMERA:
 			break;
 		default:
 			break;
@@ -697,6 +693,9 @@ void G308_keyboardListener(unsigned char key, int x, int y) {
 	}
 	else if(key == '2'){
 		splineOn = !splineOn;
+	}
+	else if(key == '3'){
+		bspline->printCoordinates();
 	}
 }
 
