@@ -20,7 +20,7 @@
 #include <stdlib.h>
 #include <math.h>
 
-Ball::Ball(float* initialPosition, float* initialVelocity, bool sp) {
+Ball::Ball(float* initialPosition, float* initialVelocity, float m, bool sp) {
 
 	// Zero
 	position = new float[3];
@@ -35,7 +35,7 @@ Ball::Ball(float* initialPosition, float* initialVelocity, bool sp) {
 		acceletation[i] = 0;
 	}
 
-	mass = 1; // Default
+	mass = m; // Default
 
 }
 

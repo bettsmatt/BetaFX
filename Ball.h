@@ -27,7 +27,7 @@ private:
 
 public:
 
-	Ball(float*, float*, bool); // Initial velocity
+	Ball(float*, float*, float, bool); // Initial velocity
 	~Ball(void);
 
 	void tick(); // Simulate one frame

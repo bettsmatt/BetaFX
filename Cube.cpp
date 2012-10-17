@@ -31,7 +31,7 @@ void Cube::renderCube() {
 	);
 
 	//glutSolidSphere(width/20, 20, 20);
-	glutSolidCube(width/5);
+	glutSolidCube(width);
 
 	glPopMatrix();
 }

@@ -84,4 +84,6 @@ public:
 
 	void EnableCubemap (); // Enable cubemap
 	void DisableCubemap (); // Disable cubemap
+
+	G308_Point FindNormal(G308_Point);
 };

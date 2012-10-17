@@ -332,49 +332,49 @@ void G308_Geometry::CreateGLWireGeometry() {
 	if (m_glGeomListWire != 0)
 		glDeleteLists(m_glGeomListWire, 1);
 
-		// Assign a display list; return 0 if err
-		m_glGeomListWire = glGenLists(1);
-		glNewList(m_glGeomListWire, GL_COMPILE);
+	// Assign a display list; return 0 if err
+	m_glGeomListWire = glGenLists(1);
+	glNewList(m_glGeomListWire, GL_COMPILE);
 
-		//----------------------
-		//YOUR CODE GOES HERE
-		//
-		// .....
-		//
-		glBegin(GL_LINE_LOOP);
+	//----------------------
+	//YOUR CODE GOES HERE
+	//
+	// .....
+	//
+	glBegin(GL_LINE_LOOP);
 
-		// Wireframe
-		for(int i = 0 ; i < m_nNumPolygon ; i ++){
-
-
-			G308_Point v1 = m_pVertexArray[m_pTriangles[i].v1];
-			G308_Point v2 = m_pVertexArray[m_pTriangles[i].v2];
-			G308_Point v3 = m_pVertexArray[m_pTriangles[i].v3];
+	// Wireframe
+	for(int i = 0 ; i < m_nNumPolygon ; i ++){
 
 
-			glVertex3f(
-					v1.x,
-					v1.y,
-					v1.z
-			);
+		G308_Point v1 = m_pVertexArray[m_pTriangles[i].v1];
+		G308_Point v2 = m_pVertexArray[m_pTriangles[i].v2];
+		G308_Point v3 = m_pVertexArray[m_pTriangles[i].v3];
 
-			glVertex3f(
-					v2.x,
-					v2.y,
-					v2.z
-			);
 
-			glVertex3f(
-					v3.x,
-					v3.y,
-					v3.z
-			);
+		glVertex3f(
+				v1.x,
+				v1.y,
+				v1.z
+		);
 
-		}
+		glVertex3f(
+				v2.x,
+				v2.y,
+				v2.z
+		);
 
-		glEnd();
+		glVertex3f(
+				v3.x,
+				v3.y,
+				v3.z
+		);
 
-		glEndList();
+	}
+
+	glEnd();
+
+	glEndList();
 
 }
 
@@ -454,50 +454,50 @@ void G308_Geometry::RenderGeometry() {
 	glBegin(GL_TRIANGLES);
 
 	G308_Point n1, n2, n3;
-		G308_UVcoord t1, t2, t3;
-		for(int i = 0 ; i < m_nNumPolygon ; i ++){
+	G308_UVcoord t1, t2, t3;
+	for(int i = 0 ; i < m_nNumPolygon ; i ++){
 
-				G308_Point v1 = m_pVertexArray[m_pTriangles[i].v1];
-				G308_Point v2 = m_pVertexArray[m_pTriangles[i].v2];
-				G308_Point v3 = m_pVertexArray[m_pTriangles[i].v3];
+		G308_Point v1 = m_pVertexArray[m_pTriangles[i].v1];
+		G308_Point v2 = m_pVertexArray[m_pTriangles[i].v2];
+		G308_Point v3 = m_pVertexArray[m_pTriangles[i].v3];
 
-				if (m_nNumNormal > 0) {
-					n1 = m_pNormalArray[m_pTriangles[i].n1];
-					n2 = m_pNormalArray[m_pTriangles[i].n2];
-					n3 = m_pNormalArray[m_pTriangles[i].n3];
-				}
-				if (m_nNumUV > 0) {
-					t1 = m_pUVArray[m_pTriangles[i].t1];
-					t2 = m_pUVArray[m_pTriangles[i].t2];
-					t3 = m_pUVArray[m_pTriangles[i].t3];
-				}
-				float textMult = 10.0f;
+		if (m_nNumNormal > 0) {
+			n1 = m_pNormalArray[m_pTriangles[i].n1];
+			n2 = m_pNormalArray[m_pTriangles[i].n2];
+			n3 = m_pNormalArray[m_pTriangles[i].n3];
+		}
+		if (m_nNumUV > 0) {
+			t1 = m_pUVArray[m_pTriangles[i].t1];
+			t2 = m_pUVArray[m_pTriangles[i].t2];
+			t3 = m_pUVArray[m_pTriangles[i].t3];
+		}
+		float textMult = 10.0f;
 
-				if (m_nNumUV > 0) {
-					glTexCoord2f(t1.u * textMult, t1.v * textMult);
-				}
-				if (m_nNumNormal > 0) {
-					glNormal3f(n1.x, n1.y, n1.z);
-				}
-				glVertex3f(v1.x, v1.y, v1.z);
+		if (m_nNumUV > 0) {
+			glTexCoord2f(t1.u * textMult, t1.v * textMult);
+		}
+		if (m_nNumNormal > 0) {
+			glNormal3f(n1.x, n1.y, n1.z);
+		}
+		glVertex3f(v1.x, v1.y, v1.z);
 
-				if (m_nNumUV > 0) {
-					glTexCoord2f(t2.u * textMult, t2.v * textMult);
-				}
-				if (m_nNumNormal > 0) {
-					glNormal3f(n2.x, n2.y, n2.z);
-				}
-				glVertex3f(v2.x, v2.y, v2.z);
+		if (m_nNumUV > 0) {
+			glTexCoord2f(t2.u * textMult, t2.v * textMult);
+		}
+		if (m_nNumNormal > 0) {
+			glNormal3f(n2.x, n2.y, n2.z);
+		}
+		glVertex3f(v2.x, v2.y, v2.z);
 
-				if (m_nNumUV > 0) {
-					glTexCoord2f(t3.u * textMult, t3.v * textMult);
-				}
-				if (m_nNumNormal > 0) {
-					glNormal3f(n3.x, n3.y, n3.z);
-				}
-				glVertex3f(v3.x, v3.y, v3.z);
+		if (m_nNumUV > 0) {
+			glTexCoord2f(t3.u * textMult, t3.v * textMult);
+		}
+		if (m_nNumNormal > 0) {
+			glNormal3f(n3.x, n3.y, n3.z);
+		}
+		glVertex3f(v3.x, v3.y, v3.z);
 
-			}
+	}
 
 
 	glEnd();
@@ -517,4 +517,28 @@ void G308_Geometry::RenderGeometry() {
 
 	glPopMatrix();
 
+}
+
+G308_Point G308_Geometry::FindNormal(G308_Point point) {
+	G308_Point temp = G308_Point();
+	temp.x = 0; temp.y = 0; temp.z = 0;
+	for(int i = 0 ; i < m_nNumPolygon ; i ++){
+		G308_Point v1 = m_pVertexArray[m_pTriangles[i].v1];
+		G308_Point v2 = m_pVertexArray[m_pTriangles[i].v2];
+		G308_Point v3 = m_pVertexArray[m_pTriangles[i].v3];
+
+		if(v1.x == point.x && v1.y == point.y && v1.z == point.z){
+			temp = v1;
+			return m_pNormalArray[m_pTriangles[i].n1];
+		}
+		else if(v2.x == point.x && v2.y == point.y && v2.z == point.z){
+			temp = v2;
+			return m_pNormalArray[m_pTriangles[i].n1];
+		}
+		else if(v3.x == point.x && v3.y == point.y && v3.z == point.z){
+			temp = v3;
+			return m_pNormalArray[m_pTriangles[i].n1];
+		}
+	}
+	return temp;
 }

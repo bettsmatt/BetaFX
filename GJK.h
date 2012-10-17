@@ -17,6 +17,7 @@ public:
 
 	int maxIterations, currentSimplexPosition;
 	int s1c, s2c;
+	G308_Point max1, max2;
 
 	bool shapesIntersect(G308_Point*, G308_Point*, int, int);
 	int pointDotProduct(G308_Point, G308_Point);
@@ -35,6 +36,9 @@ public:
 	G308_Point maxPointAlongDirection(G308_Point*, G308_Point, bool);
 
 	void removeValue(G308_Point*, G308_Point);
+
+
+	G308_Point getMax1();
 };
 
 #endif /* GJK_H_ */
