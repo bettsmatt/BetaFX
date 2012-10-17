@@ -35,7 +35,6 @@ float Collision::calculateVectorDistance(float *v1, float* v2)
 
 void Collision::collisionBall(double cor, double mass1, double mass2, double radius1, double radius2,
 		float* pos1, float* pos2, float* vel1, float* vel2){
-	//	printf("Ball position is before: %f        ", pos1[0]);
 	// Initialize
 	float totalRadius = radius1 + radius2;
 	float totalMass = mass2 / mass1;
@@ -56,7 +55,6 @@ void Collision::collisionBall(double cor, double mass1, double mass2, double rad
 	if (distance[0] != 0 || distance[1] != 0) phi2 = atan2(distance[1], distance[0]);
 
 
-	//	printf("pos2[2]: %f  relativeDistance: %f \n", distance[2], relativeDistance);
 	float st = sin(acos(distance[2] / relativeDistance));
 	float ct = cos(acos(distance[2] / relativeDistance));
 	float sp = sin(phi2);

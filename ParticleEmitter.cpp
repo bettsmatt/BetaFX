@@ -442,7 +442,6 @@ void ParticleEmitter::renderParticles() {
 }
 
 void ParticleEmitter::collideWithBalls(Ball* ball, Collision* c){
-
 	for(int i = 0; i < MAX_PARTICLES && i < created ; i ++){
 		if(c->checkIfCollidedBallParticle(ball, particles[i])){
 			if(ball->isSpecial){

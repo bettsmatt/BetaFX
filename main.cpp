@@ -22,6 +22,7 @@
 #include "ControlPoint.h"
 #include "Shape.h"
 #include "FileReader.h"
+#include "Particle.h"
 
 #define NUM_KNOTS 8
 #define NUM_POINTS 4
@@ -67,6 +68,9 @@ int animate = 0;
 int maxBalls;
 int currentBalls;
 
+bool alive;
+int deathCount;
+
 /*
  * Particle Emitter
  */
@@ -87,6 +91,8 @@ Cube** cubes = NULL;
 float test = 6.0f;
 
 int key_held = 0;
+
+float* pos;
 
 void loadTexture(char*, GLuint);
 
@@ -123,20 +129,28 @@ int main(int argc, char** argv) {
 
 	collision = new Collision();
 
-	createBalls();
 	createCubes();
 
+	alive = false;
+	deathCount = 0;
 	geometry = new G308_Geometry();
-	geometry->ReadOBJ("cube.obj");
+	geometry->ReadOBJ("testp.obj");
 	geometry->CreateGLPolyGeometry();
 	geometry->CreateGLWireGeometry();
 
 	second = new G308_Geometry();
-	second->ReadOBJ("cube.obj");
+	second->ReadOBJ("testp.obj");
 	second->CreateGLPolyGeometry();
 	second->CreateGLWireGeometry();
 
 	loadTexture("sprite2.png", 1);
+
+	pos = new float[3];
+	pos[0] = 0;pos[1] = 0;pos[2] = 0;
+
+	maxBalls = 20;
+	balls = new Ball*[maxBalls];
+	currentBalls = 0;
 
 	camAngle = 0;
 	camHeight = 0;
@@ -203,7 +217,7 @@ void loadTexture (char* filename, GLuint id){
  * Do stuff, in the background
  */
 void tick (){
-	test -= 0.01;
+	if(alive) test -= 0.01;
 	Collision* c = new Collision;
 	GJK* gjk = new GJK;
 	/*
@@ -216,7 +230,7 @@ void tick (){
 	for(int i = 0; i < currentBalls; i++){
 		for(int j = i+1; j < currentBalls; j++){
 			if(i != j && c->checkIfCollidedBalls(balls[i], balls[j])){
-				c->collisionBall(1, balls[i]->mass, balls[j]->mass, 2, 2, balls[i]->position, balls[j]->position, balls[i]->velocity, balls[j]->velocity);
+				c->collisionBall(0.99f, balls[i]->mass, balls[j]->mass, 2, 2, balls[i]->position, balls[j]->position, balls[i]->velocity, balls[j]->velocity);
 			}
 		}
 	}
@@ -226,11 +240,10 @@ void tick (){
 
 	for(int i = 0; i < currentBalls; i++){
 		for(int j = 0; j < 5; j++){
-			c->checkCollision(1.0, cubes[j], balls[i]);
+			c->checkCollision(0.9f, cubes[j], balls[i]);
 		}
 	}
 
-	//
 	// If animation is on, move the object one step.
 	if(animate == 1){
 		if(choiceChanged){
@@ -260,19 +273,38 @@ void tick (){
 	for(int i = 0; i < geometry->m_nNumPoint; i++){
 		geometryPoint[i] = G308_Point();
 		geometryPoint[i].x = geometry->m_pVertexArray[i].x + test;
-		geometryPoint[i].y = geometry->m_pVertexArray[i].y;
+		geometryPoint[i].y = geometry->m_pVertexArray[i].y + test/2;
 		geometryPoint[i].z = geometry->m_pVertexArray[i].z;
 	}
 
 	G308_Point* secondPoint = new G308_Point[second->m_nNumPoint];
 	for(int i = 0; i < second->m_nNumPoint; i++){
 		secondPoint[i] = G308_Point();
-		secondPoint[i].x = second->m_pVertexArray[i].x - 6.0f;
+		secondPoint[i].x = second->m_pVertexArray[i].x - 5.0f;
 		secondPoint[i].y = second->m_pVertexArray[i].y;
 		secondPoint[i].z = second->m_pVertexArray[i].z;
 	}
 
-	gjk->shapesIntersect(geometryPoint, secondPoint, geometry->m_nNumPoint, second->m_nNumPoint);
+	bool hit = gjk->shapesIntersect(geometryPoint, secondPoint, geometry->m_nNumPoint, second->m_nNumPoint);
+
+	G308_Point max1 = gjk->getMax1();
+	max1.x += 6.0f - test;
+	max1.y += 3.0f - test/2;
+
+	delete[] pos;
+	pos = new float[3]; pos[0] = max1.x; pos[1] = max1.y; pos[2] = max1.z;
+
+	G308_Point temp = geometry->FindNormal(max1);
+	float* test = new float[3];
+	test[0] = -1; test[1] = 0; test[2] = 0;
+
+	if(hit){
+		alive = false;
+		if(deathCount < 10) particeEmitter->cloud(1000,10);
+		if(deathCount == 10) particeEmitter->removeParticles();
+		deathCount++;
+	}
+
 	delete gjk;
 	delete[] geometryPoint;
 	delete[] secondPoint;
@@ -342,17 +374,31 @@ void G308_display() {
 	 * Draw the particle emmiter and it's particles
 	 */
 	for(int i = 0; i < currentBalls; i ++) balls[i]->renderBall();
-	glPushMatrix();
-	glColor3f(0.0f, 0.5f, 0.5f);
-	glTranslatef(test, 0.0f, 0.0f);
-	glRotatef(45, 0, 0, 1);
-	geometry->RenderGeometry();
-	glPopMatrix();
+
+	if(alive){
+		glPushMatrix();
+		glColor3f(0.0f, 0.5f, 0.5f);
+		glTranslatef(test, test/2, 0.0f);
+		geometry->RenderGeometry();
+		glPopMatrix();
+
+		glPushMatrix();
+		glColor3f(0.0f, 0.0f, 0.5f);
+		glTranslatef(-5.0f, 0.0f, 0.0f);
+		second->RenderGeometry();
+		glPopMatrix();
+
+		glPushMatrix();
+		glColor3f(0.0f, 0.0f, 0.5f);
+		glTranslatef(pos[0], pos[1], pos[2]);
+		glutSolidSphere(0.1f, 5, 5);
+		glPopMatrix();
+	}
 
 	glPushMatrix();
-	glColor3f(0.0f, 0.0f, 0.5f);
-	glTranslatef(-6.0f, 0.0f, 0.0f);
-	second->RenderGeometry();
+	glColor3f(0.0f, 0.5f, 0.5f);
+	glTranslatef(-1000000000, -1000000000,-1000000000);
+	geometry->RenderGeometry();
 	glPopMatrix();
 
 	particeEmitter->renderParticles();
@@ -443,18 +489,18 @@ void menu(int item) {
 	choiceChanged = true;
 
 	switch(item){
-		case REMOVE_PARTICLES:
-			particeEmitter->removeParticles();
-			break;
-		case REMOVE_SUNS:
-			particeEmitter->removeSuns();
-			break;
-		case SPAWN_SUN:
-			particeEmitter->spawnSun();
-			break;
-		case SPAWN_SUNS:
-			particeEmitter->spawnSuns();
-			break;
+	case REMOVE_PARTICLES:
+		particeEmitter->removeParticles();
+		break;
+	case REMOVE_SUNS:
+		particeEmitter->removeSuns();
+		break;
+	case SPAWN_SUN:
+		particeEmitter->spawnSun();
+		break;
+	case SPAWN_SUNS:
+		particeEmitter->spawnSuns();
+		break;
 	}
 
 	glutPostRedisplay();
@@ -575,14 +621,64 @@ void G308_keyboardListener(unsigned char key, int x, int y) {
 		v[2] = ZLO + (float)rand()/((float)RAND_MAX/(ZHI-ZLO));
 
 		if(currentBalls == maxBalls) return;
-		//float v[3] = {0.00f, 0.00f, 0.0f};
+
 		float p[3] = {0.0f, 6.0f, 0.0f};
 		bool special = true;
 		if(key == '-') special = false;
 
-		balls[currentBalls] = new Ball(p, v, special);
+		balls[currentBalls] = new Ball(p, v, 1, special);
 		currentBalls ++;
 		printf("Good");
+	}
+	else if(key == '['){
+		delete[] balls;
+		balls = new Ball*[maxBalls];
+		currentBalls = 0;
+	}
+	else if(key == ']'){
+		float* v = new float[3];
+		v[0] = 0;
+		v[1] = -0.1f;
+		v[2] = 0;
+
+		if(currentBalls == maxBalls) return;
+
+		float p[3] = {0.0f, 6.0f, 0.0f};
+
+		balls[currentBalls] = new Ball(p, v, 2, false);
+		currentBalls++;
+
+		particeEmitter->cloud(500,2);
+	}
+	else if(key == '\\'){
+		float* v1 = new float[3];
+		v1[0] = -0.05f;
+		v1[1] = 0;
+		v1[2] = 0.02f;
+
+		if(currentBalls == maxBalls) return;
+
+		float p1[3] = {6.0f, 6.0f, -2.0f};
+
+		balls[currentBalls] = new Ball(p1, v1, 1, false);
+		currentBalls++;
+
+		float* v2 = new float[3];
+		v2[0] = 0.05f;
+		v2[1] = 0;
+		v2[2] = -0.005;
+
+		float p2[3] = {-6.0f, 6.0f, 2.0f};
+		balls[currentBalls] = new Ball(p2, v2, 1.5f, false);
+		currentBalls++;
+
+	}
+	else if(key == ';'){
+		createBalls();
+	}
+	else if(key == '\''){
+		test = 6.0f;
+		alive = true;
 	}
 	else if(key == '1'){
 		lightsOn = !lightsOn;
@@ -650,44 +746,41 @@ void G308_SetLight() {
 }
 
 void createBalls(){
-	maxBalls = 5;
-	balls = new Ball*[maxBalls];
-
 	for(int i = 0; i < maxBalls; i++){
 		if(i == 0){
 			float v[3] = {-0.1f, 0.1f, 0.0f};
 			//float v[3] = {0.00f, 0.00f, 0.0f};
 			float p[3] = {3.0f, 0.0f, 1.0f};
 
-			balls[i] = new Ball(p, v, false);
+			balls[i] = new Ball(p, v, 1, false);
 		}
 		if(i == 1){
 			float v[3] = {0.1f, 0.1f, 0.0f};
 			//float v[3] = {0.00f, 0.00f, 0.0f};
 			float p[3] = {-6.0f, -4.0f, 0.0f};
 
-			balls[i] = new Ball(p, v, true);
+			balls[i] = new Ball(p, v, 1, true);
 		}
 		if(i == 2){
 			float v[3] = {-0.1f, 0.1f, 0.1f};
 			//float v[3] = {0.00f, 0.00f, 0.0f};
 			float p[3] = {-2.0f, -4.0f, 0.0f};
 
-			balls[i] = new Ball(p, v, false);
+			balls[i] = new Ball(p, v, 1, false);
 		}
 		if(i == 3){
 			float v[3] = {0.1f, 0.1f, 0.0f};
 			//float v[3] = {0.00f, 0.00f, 0.0f};
 			float p[3] = {-6.0f, -0.0f, 0.0f};
 
-			balls[i] = new Ball(p, v, false);
+			balls[i] = new Ball(p, v, 1, false);
 		}
 		if(i == 4){
 			float v[3] = {0.1f, 0.1f, 0.0f};
 			//float v[3] = {0.00f, 0.00f, 0.0f};
 			float p[3] = {3.0f, 2.0f, 0.0f};
 
-			balls[i] = new Ball(p, v, true);
+			balls[i] = new Ball(p, v, 1, true);
 		}
 	}
 	maxBalls = 20;

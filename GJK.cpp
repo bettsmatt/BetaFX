@@ -42,7 +42,7 @@ bool GJK::shapesIntersect(G308_Point* shape1, G308_Point* shape2, int shape1Coun
 		G308_Point A = maxPointInMinkDiffAlongDir(shape1, shape2, D);
 		if (pointDotProduct(A, D) < 0)
 		{
-			//printf("Miss\n");
+			delete[] simplex;
 			return false;
 		}
 
@@ -51,11 +51,16 @@ bool GJK::shapesIntersect(G308_Point* shape1, G308_Point* shape2, int shape1Coun
 
 		if (updateSimplexAndDirection(simplex, D))
 		{
-			//printf("Hit\n");
+			delete[] simplex;
 			return true;
 		}
 	}
+	delete[] simplex;
 	return false;
+}
+
+G308_Point GJK::getMax1(){
+	return max1;
 }
 
 // Updates the current simplex and the direction in which to look for the origin. Called DoSimplex in the video lecture.
@@ -262,7 +267,10 @@ G308_Point GJK::maxPointInMinkDiffAlongDir(G308_Point* shape1, G308_Point* shape
 	negation.y = -direction.y;
 	negation.z = -direction.z;
 
-	return pointSubtraction(maxPointAlongDirection(shape1, direction, false), maxPointAlongDirection(shape2, negation, true));
+	max1 = maxPointAlongDirection(shape1, direction, false);
+	max2 = maxPointAlongDirection(shape2, negation, true);
+
+	return pointSubtraction(max1, max2);
 }
 
 // Finds the farthest point along a given direction of a convex polyhedron
