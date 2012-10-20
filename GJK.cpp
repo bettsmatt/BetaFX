@@ -9,20 +9,18 @@
 #include "stdio.h"
 
 GJK::GJK() {
-	// TODO Auto-generated constructor stub
 	maxIterations = 20;
 	currentSimplexPosition = 0;
 }
 
 GJK::~GJK() {
-	// TODO Auto-generated destructor stub
 }
 
 // Given the vertices (in any order) of two convex 3D bodies, calculates whether they intersect
 bool GJK::shapesIntersect(G308_Point* shape1, G308_Point* shape2, int shape1Count, int shape2Count){
 	s1c = shape1Count;
 	s2c = shape2Count;
-	//for initial point, just take the difference between any two vertices (in this case - the first ones)
+	// Take the difference between any two vertices
 	G308_Point initialPoint = G308_Point();
 	initialPoint.x = shape1[0].x - shape2[0].x;
 	initialPoint.y = shape1[0].y - shape2[0].y;
@@ -66,10 +64,8 @@ G308_Point GJK::getMax1(){
 // Updates the current simplex and the direction in which to look for the origin. Called DoSimplex in the video lecture.
 bool GJK::updateSimplexAndDirection(G308_Point* simplex, G308_Point direction)
 {
-	//if the simplex is a line
-	if (currentSimplexPosition == 2)
+	if (currentSimplexPosition == 2)//if the simplex is a line
 	{
-		//A is the point added last to the simplex
 		G308_Point A = simplex[1];
 		G308_Point B = simplex[0];
 		G308_Point AB = pointSubtraction(B, A);
@@ -85,10 +81,8 @@ bool GJK::updateSimplexAndDirection(G308_Point* simplex, G308_Point direction)
 			direction = AO;
 		}
 	}
-	//if the simplex is a triangle
-	else if (currentSimplexPosition == 3)
+	else if (currentSimplexPosition == 3)//if the simplex is a triangle
 	{
-		//A is the point added last to the simplex
 		G308_Point A = simplex[2];
 		G308_Point B = simplex[1];
 		G308_Point C = simplex[0];
@@ -192,10 +186,8 @@ bool GJK::updateSimplexAndDirection(G308_Point* simplex, G308_Point direction)
 			}
 		}
 	}
-	//if the simplex is a tetrahedron
-	else //if (simplex.Count == 4)
+	else//if the simplex is a tetrahedron
 	{
-		//A is the point added last to the simplex
 		G308_Point A = simplex[3];
 		G308_Point B = simplex[2];
 		G308_Point C = simplex[1];
@@ -214,12 +206,12 @@ bool GJK::updateSimplexAndDirection(G308_Point* simplex, G308_Point direction)
 		int CsideOnADB = sign(pointDotProduct(ADB, AC));
 		int DsideOnABC = sign(pointDotProduct(ABC, AD));
 
-		//whether the origin is on the same side of ACD/ADB/ABC as B, C and D respectively
+		//whether the origin is on the same side of ACD/ADB/ABC as B, C and D
 		bool ABsameAsOrigin = sign(pointDotProduct(ACD, AO)) == BsideOnACD;
 		bool ACsameAsOrigin = sign(pointDotProduct(ADB, AO)) == CsideOnADB;
 		bool ADsameAsOrigin = sign(pointDotProduct(ABC, AO)) == DsideOnABC;
 
-		//if the origin is on the same side as all B, C and D, the origin is inside the tetrahedron and thus there is a collision
+		//if the origin is on the same side as all B, C and D, the origin is inside the tetrahedron and there is a collision
 		if (ABsameAsOrigin && ACsameAsOrigin && ADsameAsOrigin)
 		{
 			return true;
@@ -227,30 +219,24 @@ bool GJK::updateSimplexAndDirection(G308_Point* simplex, G308_Point direction)
 		//if the origin is not on the side of B relative to ACD
 		else if (!ABsameAsOrigin)
 		{
-			//B is farthest from the origin among all of the tetrahedron's points, so remove it from the list and go on with the triangle case
+			//B is farthest from the origin among all of the tetrahedron's points, so remove it
 			removeValue(simplex, B);
-			//the new direction is on the other side of ACD, relative to B
 			direction = pointScalarMultiplication(ACD, -BsideOnACD);
 		}
 		//if the origin is not on the side of C relative to ADB
 		else if (!ACsameAsOrigin)
 		{
-			//C is farthest from the origin among all of the tetrahedron's points, so remove it from the list and go on with the triangle case
+			//C is farthest from the origin among all of the tetrahedron's points, so remove it
 			removeValue(simplex, C);
-			//the new direction is on the other side of ADB, relative to C
 			direction = pointScalarMultiplication(ADB, -CsideOnADB);
 		}
 		//if the origin is not on the side of D relative to ABC
-		else //if (!ADsameAsOrigin)
+		else
 		{
-			//D is farthest from the origin among all of the tetrahedron's points, so remove it from the list and go on with the triangle case
+			//D is farthest from the origin among all of the tetrahedron's points, so remove it
 			removeValue(simplex, D);
-			//the new direction is on the other side of ABC, relative to D
 			direction = pointScalarMultiplication(ABC, -DsideOnABC);
 		}
-
-		//go on with the triangle case
-		//TODO: maybe we should restrict the depth of the recursion, just like we restricted the number of iterations in BodiesIntersect?
 		return updateSimplexAndDirection(simplex, direction);
 	}
 
@@ -259,7 +245,6 @@ bool GJK::updateSimplexAndDirection(G308_Point* simplex, G308_Point direction)
 }
 
 // Finds the farthest point along a given direction of the Minkowski difference of two convex polyhedra.
-// Called Support in the video lecture: max(D.Ai) - max(-D.Bj)
 G308_Point GJK::maxPointInMinkDiffAlongDir(G308_Point* shape1, G308_Point* shape2, G308_Point direction)
 {
 	G308_Point negation = G308_Point();
